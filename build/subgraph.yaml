@@ -1,7 +1,7 @@
 specVersion: 0.0.2
-description: VoxoDeus Ethereum Mainnet Subgraph 
+description: VoxoDeus Ethereum Mainnet Subgraph
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: VoxoDeus
@@ -20,8 +20,8 @@ dataSources:
         - MintEvent
       abis:
         - name: VoxoDeus
-          file: ./abis/VoxoDeus.json
+          file: VoxoDeus/abis/VoxoDeus.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
-      file: ./src/mapping.ts
+      file: VoxoDeus/VoxoDeus.wasm

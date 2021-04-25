@@ -6,67 +6,98 @@ import {
   OwnershipTransferred,
   Transfer
 } from "../generated/VoxoDeus/VoxoDeus"
-import { ExampleEntity } from "../generated/schema"
+import { VoxoSamaritan, VoxoStats, MintEvent} from "../generated/schema"
 
-export function handleApproval(event: Approval): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
 
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (entity == null) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
-
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
+// We react to only transfer events of Voxos 
+export function handleTransfer(event: Transfer): void {
+  // extract most useful fields 
+  let to = event.params.to
+  let from = event.params.from
+  let tokenId = event.params.tokenId.toI32()
+  let txid = event.transaction.hash.toHexString()
+  // assume its not a mint 
+  let mint = false
+  // load stats (create if doesn't exist, not id is always '1' )
+  let stats = VoxoStats.load("1")
+  if (stats == null){
+    stats = new VoxoStats("1")
+    stats.totalMinted = 0
+    stats.histHodlers = []
+    stats.currentHodlers = []
   }
+  // update the total minted stats 
+  if (tokenId > stats.totalMinted){
+    stats.totalMinted = tokenId
+  }
+  // get historical and current holders 
+  let histHodlers = stats.histHodlers
+  let currentHodlers = stats.currentHodlers
+  // update historical holders with to address if its new address 
+  if (!histHodlers.includes(to)){
+    histHodlers.push(to)
+  }
+  // update current holders with to address if its new address 
+  if(!currentHodlers.includes(to)){
+    currentHodlers.push(to)
+  }
+  // set stats for historical holders 
+  stats.histHodlers = histHodlers
+  // if its a mint event update 
+  if (from.toHex() == '0x0000000000000000000000000000000000000000'){
+    mint = true
+  }
+  // if its not mint, we need to remove current Voxo from the senders address who sold his voxo 
+  else {
+    // get sender
+    let fromSamaritan = VoxoSamaritan.load(from.toHex())
+    // remove from current colelction 
+    let collection = fromSamaritan.trove
+    for(let i=0; i<collection.length; i++){
+      if (collection[i] == tokenId ){
+        collection.splice(i)
+      }
+    }
+    // update his current collection 
+    fromSamaritan.trove = collection
+    // remove user from currentHodlers if he has no voxos left 
+    if (collection.length === 0 ){
+      for(let i=0; i < currentHodlers.length; i++){
+        if(currentHodlers[i] === from){
+          currentHodlers.splice(i)
+        }
+      }
+    }
+    // update sender entity  
+    fromSamaritan.save()
+  }
+  // grab reciever stats 
+  let toSamaritan = VoxoSamaritan.load(to.toHex())
+  if (toSamaritan == null){
+    toSamaritan = new VoxoSamaritan(to.toHex())
+    toSamaritan.hodlHist = []
+    toSamaritan.trove = []
+  }
+  // if mint add to mint 
+  if (mint){
+    let mintEvent = new MintEvent(txid)
+    mintEvent.blockNumber =  event.block.number
+    mintEvent.timestamp = event.block.timestamp
+    mintEvent.user = toSamaritan.id
+    mintEvent.tokenId = tokenId
+    mintEvent.save()
+  }
+  // if not mint update current collection + ownage hist 
+  let ownageHist = toSamaritan.hodlHist
+  ownageHist.push(tokenId)
+  toSamaritan.hodlHist = ownageHist
+  let trove = toSamaritan.trove
+  trove.push(tokenId)
+  toSamaritan.trove = trove 
+  stats.currentHodlers = currentHodlers
+  // save  
+  toSamaritan.save()
+  stats.save()
 
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
-
-  // Entity fields can be set based on event parameters
-  entity.owner = event.params.owner
-  entity.approved = event.params.approved
-
-  // Entities can be written to the store with `.save()`
-  entity.save()
-
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.balanceOf(...)
-  // - contract.baseURI(...)
-  // - contract.getApproved(...)
-  // - contract.isApprovedForAll(...)
-  // - contract.isOwner(...)
-  // - contract.name(...)
-  // - contract.owner(...)
-  // - contract.ownerOf(...)
-  // - contract.supportsInterface(...)
-  // - contract.symbol(...)
-  // - contract.tokenByIndex(...)
-  // - contract.tokenOfOwnerByIndex(...)
-  // - contract.tokenURI(...)
-  // - contract.totalSupply(...)
-  // - contract.baseTokenURI(...)
-  // - contract.contractURI(...)
 }
 
-export function handleApprovalForAll(event: ApprovalForAll): void {}
-
-export function handleOwnershipTransferred(event: OwnershipTransferred): void {}
-
-export function handleTransfer(event: Transfer): void {}
