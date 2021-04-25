@@ -17,7 +17,31 @@ This subgraph was built in order to make the following tasks easier, since it wo
 
 ## Example Queries: 
 
-1. Query the first 5 VoxoSamaritans 
+1. Get the total voxos minted 
+
+```
+{
+  voxoStats(id:"1"){
+    totalMinted
+    histHodlers
+  }
+}
+```
+Result
+
+```
+{
+  "data": {
+    "voxoStats": {
+      "histHodlers": [
+        "0xc212f04685cfcc8444d3b8368f045e2a2675c039"
+       ],
+      "totalMinted": 1004
+    }
+  }
+}
+```
+2. Query the first 5 VoxoSamaritans 
 
 ```
 {
