@@ -42,6 +42,15 @@ export class VoxoSamaritan extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get troveCount(): i32 {
+    let value = this.get("troveCount");
+    return value.toI32();
+  }
+
+  set troveCount(value: i32) {
+    this.set("troveCount", Value.fromI32(value));
+  }
+
   get trove(): Array<i32> {
     let value = this.get("trove");
     return value.toI32Array();
@@ -49,6 +58,15 @@ export class VoxoSamaritan extends Entity {
 
   set trove(value: Array<i32>) {
     this.set("trove", Value.fromI32Array(value));
+  }
+
+  get holdHistCount(): i32 {
+    let value = this.get("holdHistCount");
+    return value.toI32();
+  }
+
+  set holdHistCount(value: i32) {
+    this.set("holdHistCount", Value.fromI32(value));
   }
 
   get hodlHist(): Array<i32> {
@@ -60,6 +78,15 @@ export class VoxoSamaritan extends Entity {
     this.set("hodlHist", Value.fromI32Array(value));
   }
 
+  get mintCount(): i32 {
+    let value = this.get("mintCount");
+    return value.toI32();
+  }
+
+  set mintCount(value: i32) {
+    this.set("mintCount", Value.fromI32(value));
+  }
+
   get mintHist(): Array<string> {
     let value = this.get("mintHist");
     return value.toStringArray();
@@ -67,6 +94,24 @@ export class VoxoSamaritan extends Entity {
 
   set mintHist(value: Array<string>) {
     this.set("mintHist", Value.fromStringArray(value));
+  }
+
+  get burnCount(): i32 {
+    let value = this.get("burnCount");
+    return value.toI32();
+  }
+
+  set burnCount(value: i32) {
+    this.set("burnCount", Value.fromI32(value));
+  }
+
+  get burnHist(): Array<string> {
+    let value = this.get("burnHist");
+    return value.toStringArray();
+  }
+
+  set burnHist(value: Array<string>) {
+    this.set("burnHist", Value.fromStringArray(value));
   }
 }
 
@@ -109,6 +154,15 @@ export class VoxoStats extends Entity {
     this.set("totalMinted", Value.fromI32(value));
   }
 
+  get totalBurned(): i32 {
+    let value = this.get("totalBurned");
+    return value.toI32();
+  }
+
+  set totalBurned(value: i32) {
+    this.set("totalBurned", Value.fromI32(value));
+  }
+
   get histHodlers(): Array<Bytes> {
     let value = this.get("histHodlers");
     return value.toBytesArray();
@@ -147,6 +201,73 @@ export class MintEvent extends Entity {
 
   static load(id: string): MintEvent | null {
     return store.get("MintEvent", id) as MintEvent | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get blockNumber(): BigInt {
+    let value = this.get("blockNumber");
+    return value.toBigInt();
+  }
+
+  set blockNumber(value: BigInt) {
+    this.set("blockNumber", Value.fromBigInt(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get user(): string {
+    let value = this.get("user");
+    return value.toString();
+  }
+
+  set user(value: string) {
+    this.set("user", Value.fromString(value));
+  }
+
+  get tokenId(): i32 {
+    let value = this.get("tokenId");
+    return value.toI32();
+  }
+
+  set tokenId(value: i32) {
+    this.set("tokenId", Value.fromI32(value));
+  }
+}
+
+export class BurnEvent extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save BurnEvent entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save BurnEvent entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("BurnEvent", id.toString(), this);
+  }
+
+  static load(id: string): BurnEvent | null {
+    return store.get("BurnEvent", id) as BurnEvent | null;
   }
 
   get id(): string {

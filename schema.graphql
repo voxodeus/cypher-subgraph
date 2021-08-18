@@ -19,8 +19,8 @@ type VoxoSamaritan @entity {
   mintHist: [MintEvent!]! @derivedFrom(field: "user")
 
   # number of burned tokens
-  burnedCount: Int
-  burnedHist: [BurnEvent!]! @derivedFrom(field: "user")
+  burnCount: Int
+  burnHist: [BurnEvent!]! @derivedFrom(field: "user")
 }
 
 type VoxoStats @entity {
