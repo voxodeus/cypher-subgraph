@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt  } from "@graphprotocol/graph-ts"
 import {
   VoxoDeus,
   Approval,
@@ -6,7 +6,7 @@ import {
   OwnershipTransferred,
   Transfer
 } from "../generated/VoxoDeus/VoxoDeus"
-import { VoxoSamaritan, VoxoStats, MintEvent} from "../generated/schema"
+import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent} from "../generated/schema"
 
 
 // We react to only transfer events of Voxos 
@@ -18,11 +18,14 @@ export function handleTransfer(event: Transfer): void {
   let txid = event.transaction.hash.toHexString()
   // assume its not a mint 
   let mint = false
+  // assume its not a burned 
+  let burned = false
   // load stats (create if doesn't exist, not id is always '1' )
   let stats = VoxoStats.load("1")
   if (stats == null){
     stats = new VoxoStats("1")
     stats.totalMinted = 0
+    stats.totalBurned = 0
     stats.histHodlers = []
     stats.currentHodlers = []
   }
@@ -30,6 +33,13 @@ export function handleTransfer(event: Transfer): void {
   if (tokenId > stats.totalMinted){
     stats.totalMinted = tokenId
   }
+  // if its a burned event.
+  if (to.toHex() == '0x0000000000000000000000000000000000000000'){
+    burned  = true
+    // Update total burned
+    stats.totalBurned += 1
+  }
+  
   // get historical and current holders 
   let histHodlers = stats.histHodlers
   let currentHodlers = stats.currentHodlers
@@ -43,11 +53,12 @@ export function handleTransfer(event: Transfer): void {
   }
   // set stats for historical holders 
   stats.histHodlers = histHodlers
+
   // if its a mint event update 
   if (from.toHex() == '0x0000000000000000000000000000000000000000'){
     mint = true
   }
-  // if its not mint, we need to remove current Voxo from the senders address who sold his voxo 
+  // its a transfer event, we need to remove current Voxo from the senders address who sold his voxo 
   else {
     // get sender
     let fromSamaritan = VoxoSamaritan.load(from.toHex())
@@ -75,9 +86,17 @@ export function handleTransfer(event: Transfer): void {
   let toSamaritan = VoxoSamaritan.load(to.toHex())
   if (toSamaritan == null){
     toSamaritan = new VoxoSamaritan(to.toHex())
+    toSamaritan.burnCount = 0
+    toSamaritan.burnHist = []
+    toSamaritan.mintCount = 0
+    toSamaritan.mintHist = []
+    toSamaritan.holdHistCount =0
     toSamaritan.hodlHist = []
+    toSamaritan.troveCount = 0
     toSamaritan.trove = []
   }
+
+  // Add the event.
   // if mint add to mint 
   if (mint){
     let mintEvent = new MintEvent(txid)
@@ -86,11 +105,19 @@ export function handleTransfer(event: Transfer): void {
     mintEvent.user = toSamaritan.id
     mintEvent.tokenId = tokenId
     mintEvent.save()
+  }else if (burned){
+    let burnEvent = new BurnEvent(txid)
+    burnEvent.blockNumber =  event.block.number
+    burnEvent.timestamp = event.block.timestamp
+    burnEvent.user = toSamaritan.id
+    burnEvent.tokenId = tokenId
+    burnEvent.save()
   }
   // if not mint update current collection + ownage hist 
   let ownageHist = toSamaritan.hodlHist
   ownageHist.push(tokenId)
   toSamaritan.hodlHist = ownageHist
+  toSamaritan.holdHistCount += 1
   let trove = toSamaritan.trove
   trove.push(tokenId)
   toSamaritan.trove = trove 
