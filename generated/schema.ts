@@ -42,6 +42,23 @@ export class VoxoSamaritan extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get stats(): string | null {
+    let value = this.get("stats");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set stats(value: string | null) {
+    if (value === null) {
+      this.unset("stats");
+    } else {
+      this.set("stats", Value.fromString(value as string));
+    }
+  }
+
   get troveCount(): i32 {
     let value = this.get("troveCount");
     return value.toI32();
@@ -51,13 +68,13 @@ export class VoxoSamaritan extends Entity {
     this.set("troveCount", Value.fromI32(value));
   }
 
-  get trove(): Array<i32> {
+  get trove(): Array<string> {
     let value = this.get("trove");
-    return value.toI32Array();
+    return value.toStringArray();
   }
 
-  set trove(value: Array<i32>) {
-    this.set("trove", Value.fromI32Array(value));
+  set trove(value: Array<string>) {
+    this.set("trove", Value.fromStringArray(value));
   }
 
   get holdHistCount(): i32 {
@@ -69,13 +86,13 @@ export class VoxoSamaritan extends Entity {
     this.set("holdHistCount", Value.fromI32(value));
   }
 
-  get hodlHist(): Array<i32> {
+  get hodlHist(): Array<string> {
     let value = this.get("hodlHist");
-    return value.toI32Array();
+    return value.toStringArray();
   }
 
-  set hodlHist(value: Array<i32>) {
-    this.set("hodlHist", Value.fromI32Array(value));
+  set hodlHist(value: Array<string>) {
+    this.set("hodlHist", Value.fromStringArray(value));
   }
 
   get mintCount(): i32 {
@@ -112,6 +129,128 @@ export class VoxoSamaritan extends Entity {
 
   set burnHist(value: Array<string>) {
     this.set("burnHist", Value.fromStringArray(value));
+  }
+}
+
+export class VoxoToken extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save VoxoToken entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save VoxoToken entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("VoxoToken", id.toString(), this);
+  }
+
+  static load(id: string): VoxoToken | null {
+    return store.get("VoxoToken", id) as VoxoToken | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get user(): string | null {
+    let value = this.get("user");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
+  }
+
+  get ownerHist(): Array<string> {
+    let value = this.get("ownerHist");
+    return value.toStringArray();
+  }
+
+  set ownerHist(value: Array<string>) {
+    this.set("ownerHist", Value.fromStringArray(value));
+  }
+}
+
+export class VoxoHistoricalHodl extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save VoxoHistoricalHodl entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save VoxoHistoricalHodl entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("VoxoHistoricalHodl", id.toString(), this);
+  }
+
+  static load(id: string): VoxoHistoricalHodl | null {
+    return store.get("VoxoHistoricalHodl", id) as VoxoHistoricalHodl | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get user(): string | null {
+    let value = this.get("user");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
+  }
+
+  get token(): string | null {
+    let value = this.get("token");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set token(value: string | null) {
+    if (value === null) {
+      this.unset("token");
+    } else {
+      this.set("token", Value.fromString(value as string));
+    }
   }
 }
 
@@ -162,24 +301,6 @@ export class VoxoStats extends Entity {
   set totalBurned(value: i32) {
     this.set("totalBurned", Value.fromI32(value));
   }
-
-  get histHodlers(): Array<Bytes> {
-    let value = this.get("histHodlers");
-    return value.toBytesArray();
-  }
-
-  set histHodlers(value: Array<Bytes>) {
-    this.set("histHodlers", Value.fromBytesArray(value));
-  }
-
-  get currentHodlers(): Array<Bytes> {
-    let value = this.get("currentHodlers");
-    return value.toBytesArray();
-  }
-
-  set currentHodlers(value: Array<Bytes>) {
-    this.set("currentHodlers", Value.fromBytesArray(value));
-  }
 }
 
 export class MintEvent extends Entity {
@@ -212,6 +333,15 @@ export class MintEvent extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get type(): string {
+    let value = this.get("type");
+    return value.toString();
+  }
+
+  set type(value: string) {
+    this.set("type", Value.fromString(value));
+  }
+
   get blockNumber(): BigInt {
     let value = this.get("blockNumber");
     return value.toBigInt();
@@ -230,13 +360,21 @@ export class MintEvent extends Entity {
     this.set("timestamp", Value.fromBigInt(value));
   }
 
-  get user(): string {
+  get user(): string | null {
     let value = this.get("user");
-    return value.toString();
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
   }
 
-  set user(value: string) {
-    this.set("user", Value.fromString(value));
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
   }
 
   get tokenId(): i32 {
@@ -279,6 +417,15 @@ export class BurnEvent extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get type(): string {
+    let value = this.get("type");
+    return value.toString();
+  }
+
+  set type(value: string) {
+    this.set("type", Value.fromString(value));
+  }
+
   get blockNumber(): BigInt {
     let value = this.get("blockNumber");
     return value.toBigInt();
@@ -297,13 +444,21 @@ export class BurnEvent extends Entity {
     this.set("timestamp", Value.fromBigInt(value));
   }
 
-  get user(): string {
+  get user(): string | null {
     let value = this.get("user");
-    return value.toString();
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
   }
 
-  set user(value: string) {
-    this.set("user", Value.fromString(value));
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
   }
 
   get tokenId(): i32 {

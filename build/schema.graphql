@@ -1,34 +1,108 @@
 type VoxoSamaritan @entity {
   # user address 
   id: ID!
+
+  # stats
+  stats: VoxoStats
+
+  # current collection count
+  troveCount: Int
   # user current collection 
-  trove: [Int!]!
+  trove: [VoxoToken!]! @derivedFrom(field: "user")
+  
+  # historical count of unique token owned by this user
+  holdHistCount: Int
   # user historical collection 
-  hodlHist: [Int!]!
+  hodlHist: [VoxoHistoricalHodl!]! @derivedFrom(field: "user")
+
+  # number of minted tokens
+  mintCount: Int
   # mint history for user 
   mintHist: [MintEvent!]! @derivedFrom(field: "user")
+
+  # number of burned tokens
+  burnCount: Int
+  # burned token history for this user
+  burnHist: [BurnEvent!]! @derivedFrom(field: "user")
 }
+
+# This is more efficient for querying, updating the tokens
+type VoxoToken @entity {
+  # token id
+  id: ID!
+  # current owner
+  user: VoxoSamaritan
+  # historical owners
+  ownerHist: [VoxoHistoricalHodl!]! @derivedFrom(field: "token")
+}
+
+# This is more efficient for upserting into the historical owners
+type VoxoHistoricalHodl @entity {
+  # token id + user id
+  id: ID!
+  # user
+  user: VoxoSamaritan
+  # token
+  token: VoxoToken
+}
+
 
 type VoxoStats @entity {
   # always 1
   id: ID!
   # the number of voxos minted all time 
   totalMinted: Int!
-  # list of all historical holders 
-  histHodlers: [Bytes!]!
-  # list of current owners 
-  currentHodlers: [Bytes!]!
+  # the number of voxos burned all time 
+  totalBurned: Int!
 }
 
-type MintEvent @entity {
+enum EventType {
+  MINT
+  BURN
+
+}
+
+interface Event {
+  # transaction hash of event 
+  id: ID!
+  # either of mint and burn
+  type: EventType!
+  # block number of event
+  blockNumber: BigInt!
+  # timestamp of event 
+  timestamp: BigInt! 
+  # performer of event
+  user: VoxoSamaritan
+  # Affected tokenId 
+  tokenId: Int! 
+}
+
+type MintEvent implements Event @entity {
   # transaction hash of mint event 
   id: ID!
+  # mint type
+  type: EventType!
   # block number of mint event
   blockNumber: BigInt!
   # timestamp of mint event 
   timestamp: BigInt! 
   # user who minted the voxo 
-  user: VoxoSamaritan! 
+  user: VoxoSamaritan
   # tokenId of Voxo minted 
+  tokenId: Int! 
+}
+
+type BurnEvent implements Event @entity {
+  # transaction hash of burn event 
+  id: ID!
+  # burn type
+  type: EventType!
+  # block number of burn event
+  blockNumber: BigInt!
+  # timestamp of burn event 
+  timestamp: BigInt! 
+  # user who burned the voxo 
+  user: VoxoSamaritan
+  # tokenId of Voxo burned 
   tokenId: Int! 
 }

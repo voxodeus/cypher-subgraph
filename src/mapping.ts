@@ -1,13 +1,62 @@
-import { BigInt  } from "@graphprotocol/graph-ts"
+import { Address} from "@graphprotocol/graph-ts"
+
 import {
-  VoxoDeus,
-  Approval,
-  ApprovalForAll,
-  OwnershipTransferred,
   Transfer
 } from "../generated/VoxoDeus/VoxoDeus"
-import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent} from "../generated/schema"
+import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, VoxoToken, VoxoHistoricalHodl} from "../generated/schema"
 
+
+let ZERO_ADDRESS = i32(0)
+
+function getOrCreateVoxosStats(): VoxoStats {
+  // load stats (create if doesn't exist, not id is always '1' )
+  let stats = VoxoStats.load("1")
+  if (stats == null){
+    stats = new VoxoStats("1")
+    stats.totalMinted = 0
+    stats.totalBurned = 0
+  }
+  return stats as VoxoStats
+}
+
+
+function getOrCreateSamaritan(samaritanId: string): VoxoSamaritan {
+  // load samaritan (create if doesn't exist)
+  let samaritan = VoxoSamaritan.load(samaritanId)
+  if (samaritan == null){
+    samaritan = new VoxoSamaritan(samaritanId)
+    samaritan.burnCount = 0
+    samaritan.mintCount = 0
+    samaritan.holdHistCount =0
+    samaritan.troveCount = 0
+  }
+  return samaritan as VoxoSamaritan
+}
+
+function getOrCreateVoxosToken(tokenId: string): VoxoToken {
+  // load token (create if doesn't exist)
+  let token = VoxoToken.load(tokenId)
+  if (token == null){
+    token = new VoxoToken(tokenId)
+    token.save()
+  }
+  return token as VoxoToken
+}
+
+function CreateIfNotExistsVoxoHistoricalHodl(samaritanId: string, tokenId: string):  boolean {
+  // load historical hodl (create if doesn't exist)
+  let id = `${samaritanId}-${tokenId}`
+  let created = false
+  let historicalHodl = VoxoHistoricalHodl.load(id)
+  if (historicalHodl == null){
+    historicalHodl = new VoxoHistoricalHodl(id)
+    historicalHodl.token = tokenId
+    historicalHodl.user = samaritanId
+    historicalHodl.save()
+    created = true
+  }
+  return created
+}
 
 // We react to only transfer events of Voxos 
 export function handleTransfer(event: Transfer): void {
@@ -18,113 +67,62 @@ export function handleTransfer(event: Transfer): void {
   let txid = event.transaction.hash.toHexString()
   // assume its not a mint 
   let mint = false
-  // assume its not a burned 
-  let burned = false
-  // load stats (create if doesn't exist, not id is always '1' )
-  let stats = VoxoStats.load("1")
-  if (stats == null){
-    stats = new VoxoStats("1")
-    stats.totalMinted = 0
-    stats.totalBurned = 0
-    stats.histHodlers = []
-    stats.currentHodlers = []
-  }
-  // update the total minted stats 
-  if (tokenId > stats.totalMinted){
-    stats.totalMinted = tokenId
-  }
-  // if its a burned event.
-  if (to.toHex() == '0x0000000000000000000000000000000000000000'){
-    burned  = true
-    // Update total burned
-    stats.totalBurned += 1
+  // assume its not a burn 
+  let burn = false
+
+  let stats = getOrCreateVoxosStats()
+  let fromSamaritan = getOrCreateSamaritan(from.toHex())
+  let samaritan = getOrCreateSamaritan(to.toHex())
+  
+
+  // Update the holdCount for each samaritan.
+  fromSamaritan.troveCount = fromSamaritan.troveCount - 1
+  samaritan.troveCount = samaritan.troveCount + 1
+
+  // Update the owner info.
+  let token = getOrCreateVoxosToken(tokenId.toString())
+  token.user = samaritan.id
+  token.save()
+
+  // Create a hodl history if not exists.
+  let created = CreateIfNotExistsVoxoHistoricalHodl(tokenId.toString(), samaritan.id)
+  
+  // Increase holdHistCount if the samaritan didn't own this trove previously.
+  if (created) {
+    samaritan.holdHistCount = samaritan.holdHistCount + 1
   }
   
-  // get historical and current holders 
-  let histHodlers = stats.histHodlers
-  let currentHodlers = stats.currentHodlers
-  // update historical holders with to address if its new address 
-  if (!histHodlers.includes(to)){
-    histHodlers.push(to)
-  }
-  // update current holders with to address if its new address 
-  if(!currentHodlers.includes(to)){
-    currentHodlers.push(to)
-  }
-  // set stats for historical holders 
-  stats.histHodlers = histHodlers
-
-  // if its a mint event update 
-  if (from.toHex() == '0x0000000000000000000000000000000000000000'){
-    mint = true
-  }
-  // its a transfer event, we need to remove current Voxo from the senders address who sold his voxo 
-  else {
-    // get sender
-    let fromSamaritan = VoxoSamaritan.load(from.toHex())
-    // remove from current colelction 
-    let collection = fromSamaritan.trove
-    for(let i=0; i<collection.length; i++){
-      if (collection[i] == tokenId ){
-        collection.splice(i)
-      }
-    }
-    // update his current collection 
-    fromSamaritan.trove = collection
-    // remove user from currentHodlers if he has no voxos left 
-    if (collection.length === 0 ){
-      for(let i=0; i < currentHodlers.length; i++){
-        if(currentHodlers[i] === from){
-          currentHodlers.splice(i)
-        }
-      }
-    }
-    // update sender entity  
-    fromSamaritan.save()
-  }
-  // grab reciever stats 
-  let toSamaritan = VoxoSamaritan.load(to.toHex())
-  if (toSamaritan == null){
-    toSamaritan = new VoxoSamaritan(to.toHex())
-    toSamaritan.burnCount = 0
-    toSamaritan.burnHist = []
-    toSamaritan.mintCount = 0
-    toSamaritan.mintHist = []
-    toSamaritan.holdHistCount =0
-    toSamaritan.hodlHist = []
-    toSamaritan.troveCount = 0
-    toSamaritan.trove = []
-  }
-
-  // Add the event.
-  // if mint add to mint 
-  if (mint){
+  // Check if it's a mint or a burn event.
+  if (from.toI32() == ZERO_ADDRESS){
     let mintEvent = new MintEvent(txid)
+    mintEvent.type = "MINT"
     mintEvent.blockNumber =  event.block.number
     mintEvent.timestamp = event.block.timestamp
-    mintEvent.user = toSamaritan.id
+    mintEvent.user = samaritan.id
     mintEvent.tokenId = tokenId
     mintEvent.save()
-  }else if (burned){
+
+    // Increase mint count for the samaritan and stats.
+    stats.totalMinted = stats.totalMinted + 1
+    samaritan.mintCount = samaritan.mintCount + 1
+  }
+  else if (to.toI32() == ZERO_ADDRESS){
+    // Add the burn event.
     let burnEvent = new BurnEvent(txid)
+    burnEvent.type = "BURN"
     burnEvent.blockNumber =  event.block.number
     burnEvent.timestamp = event.block.timestamp
-    burnEvent.user = toSamaritan.id
+    burnEvent.user = samaritan.id
     burnEvent.tokenId = tokenId
     burnEvent.save()
-  }
-  // if not mint update current collection + ownage hist 
-  let ownageHist = toSamaritan.hodlHist
-  ownageHist.push(tokenId)
-  toSamaritan.hodlHist = ownageHist
-  toSamaritan.holdHistCount += 1
-  let trove = toSamaritan.trove
-  trove.push(tokenId)
-  toSamaritan.trove = trove 
-  stats.currentHodlers = currentHodlers
-  // save  
-  toSamaritan.save()
-  stats.save()
 
+    // Increase burn count for the samaritan and stats.
+    stats.totalBurned = stats.totalBurned + 1
+    samaritan.burnCount = samaritan.burnCount + 1
+  }
+
+  // Update objects.
+  stats.save()
+  samaritan.save()
 }
 

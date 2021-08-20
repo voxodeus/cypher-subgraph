@@ -8,12 +8,12 @@ type VoxoSamaritan @entity {
   # current collection count
   troveCount: Int
   # user current collection 
-  trove: [Int!]!
+  trove: [VoxoToken!]! @derivedFrom(field: "user")
   
   # historical count of unique token owned by this user
   holdHistCount: Int
   # user historical collection 
-  hodlHist: [Int!]!
+  hodlHist: [VoxoHistoricalHodl!]! @derivedFrom(field: "user")
 
   # number of minted tokens
   mintCount: Int
@@ -26,6 +26,27 @@ type VoxoSamaritan @entity {
   burnHist: [BurnEvent!]! @derivedFrom(field: "user")
 }
 
+# This is more efficient for querying, updating the tokens
+type VoxoToken @entity {
+  # token id
+  id: ID!
+  # current owner
+  user: VoxoSamaritan
+  # historical owners
+  ownerHist: [VoxoHistoricalHodl!]! @derivedFrom(field: "token")
+}
+
+# This is more efficient for upserting into the historical owners
+type VoxoHistoricalHodl @entity {
+  # token id + user id
+  id: ID!
+  # user
+  user: VoxoSamaritan
+  # token
+  token: VoxoToken
+}
+
+
 type VoxoStats @entity {
   # always 1
   id: ID!
@@ -33,10 +54,6 @@ type VoxoStats @entity {
   totalMinted: Int!
   # the number of voxos burned all time 
   totalBurned: Int!
-  # list of all historical holders 
-  histHodlers: [VoxoSamaritan!]! @derivedFrom(field: "stats")
-  # list of current owners 
-  currentHodlers: [VoxoSamaritan!]! @derivedFrom(field: "stats")
 }
 
 enum EventType {
@@ -63,6 +80,8 @@ interface Event {
 type MintEvent implements Event @entity {
   # transaction hash of mint event 
   id: ID!
+  # mint type
+  type: EventType!
   # block number of mint event
   blockNumber: BigInt!
   # timestamp of mint event 
@@ -76,6 +95,8 @@ type MintEvent implements Event @entity {
 type BurnEvent implements Event @entity {
   # transaction hash of burn event 
   id: ID!
+  # burn type
+  type: EventType!
   # block number of burn event
   blockNumber: BigInt!
   # timestamp of burn event 
