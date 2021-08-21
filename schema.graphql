@@ -6,24 +6,24 @@ type VoxoSamaritan @entity {
   stats: VoxoStats
 
   # current collection count
-  troveCount: Int
+  currentCollectionCount: Int
   # user current collection 
-  trove: [VoxoToken!]! @derivedFrom(field: "user")
+  currentCollection: [VoxoToken!]! @derivedFrom(field: "user")
   
   # historical count of unique token owned by this user
-  holdHistCount: Int
+  holdHistoryCount: Int
   # user historical collection 
-  hodlHist: [VoxoHistoricalHodl!]! @derivedFrom(field: "user")
+  holdHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "user")
 
   # number of minted tokens
   mintCount: Int
-  # mint history for user 
-  mintHist: [MintEvent!]! @derivedFrom(field: "user")
+  # minted tokens for this user
+  mints: [MintEvent!]! @derivedFrom(field: "user")
 
   # number of burned tokens
   burnCount: Int
-  # burned token history for this user
-  burnHist: [BurnEvent!]! @derivedFrom(field: "user")
+  # burned tokens by this user
+  burns: [BurnEvent!]! @derivedFrom(field: "user")
 }
 
 # This is more efficient for querying, updating the tokens
@@ -33,11 +33,11 @@ type VoxoToken @entity {
   # current owner
   user: VoxoSamaritan
   # historical owners
-  ownerHist: [VoxoHistoricalHodl!]! @derivedFrom(field: "token")
+  ownerHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "token")
 }
 
 # This is more efficient for upserting into the historical owners
-type VoxoHistoricalHodl @entity {
+type VoxoHistoricalHold @entity {
   # token id + user id
   id: ID!
   # user
@@ -54,6 +54,12 @@ type VoxoStats @entity {
   totalMinted: Int!
   # the number of voxos burned all time 
   totalBurned: Int!
+  # the number of total token transfers
+  totalTransfers: Int!
+  # the number of voxos holders that have at least one token
+  totalHolders: Int!
+  # the number of total historical holders
+  totalHistoricalHolders: Int!
 }
 
 enum EventType {

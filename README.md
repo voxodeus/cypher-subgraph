@@ -96,12 +96,15 @@ __VoxoHistoricalHodl__: stores historical owners of a token
   }
 }
 ```
-### Query the total voxos minted and burned
+### Query the total voxos minted, burned, transfered and also the total token holders (current or historical)
 ```graphql
 {
   voxoStats(id:"1"){
     totalMinted
     totalBurned
+    totalTransfers
+    totalHolders
+    totalHistoricalHolders
   }
 }
 ```

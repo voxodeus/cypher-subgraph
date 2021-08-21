@@ -3,7 +3,7 @@ import { Address} from "@graphprotocol/graph-ts"
 import {
   Transfer
 } from "../generated/VoxoDeus/VoxoDeus"
-import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, VoxoToken, VoxoHistoricalHodl} from "../generated/schema"
+import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, VoxoToken, VoxoHistoricalHold} from "../generated/schema"
 
 
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -15,22 +15,36 @@ function getOrCreateVoxosStats(): VoxoStats {
     stats = new VoxoStats("1")
     stats.totalMinted = 0
     stats.totalBurned = 0
+    stats.totalHistoricalHolders = 0
+    stats.totalHolders = 0
+    stats.totalTransfers = 0
   }
   return stats as VoxoStats
 }
 
+// A simple hepler class.
+class CreateSamaritanResult {
+  public samaritan: VoxoSamaritan
+  public created: boolean
 
-function getOrCreateSamaritan(samaritanId: string): VoxoSamaritan {
+  constructor(samaritan: VoxoSamaritan, created: boolean) {
+    this.samaritan = samaritan
+    this.created = created
+  }
+}
+function getOrCreateSamaritan(samaritanId: string): CreateSamaritanResult {
   // load samaritan (create if doesn't exist)
   let samaritan = VoxoSamaritan.load(samaritanId)
+  let created = false
   if (samaritan == null){
     samaritan = new VoxoSamaritan(samaritanId)
     samaritan.burnCount = 0
     samaritan.mintCount = 0
-    samaritan.holdHistCount =0
-    samaritan.troveCount = 0
+    samaritan.holdHistoryCount = 0
+    samaritan.currentCollectionCount = 0
+    created = true
   }
-  return samaritan as VoxoSamaritan
+  return new CreateSamaritanResult(samaritan as VoxoSamaritan, created)
 }
 
 function getOrCreateVoxosToken(tokenId: string): VoxoToken {
@@ -38,7 +52,6 @@ function getOrCreateVoxosToken(tokenId: string): VoxoToken {
   let token = VoxoToken.load(tokenId)
   if (token == null){
     token = new VoxoToken(tokenId)
-    token.save()
   }
   return token as VoxoToken
 }
@@ -47,9 +60,9 @@ function CreateIfNotExistsVoxoHistoricalHodl(samaritanId: string, tokenId: strin
   // load historical hodl (create if doesn't exist)
   let id = samaritanId + "-" + tokenId
   let created = false
-  let historicalHodl = VoxoHistoricalHodl.load(id)
+  let historicalHodl = VoxoHistoricalHold.load(id)
   if (historicalHodl == null){
-    historicalHodl = new VoxoHistoricalHodl(id)
+    historicalHodl = new VoxoHistoricalHold(id)
     historicalHodl.token = tokenId
     historicalHodl.user = samaritanId
     historicalHodl.save()
@@ -68,13 +81,30 @@ export function handleTransfer(event: Transfer): void {
 
   // Get or create entities.
   let stats = getOrCreateVoxosStats()
-  let fromSamaritan = getOrCreateSamaritan(from.toHex())
-  let samaritan = getOrCreateSamaritan(to.toHex())
+  let fromSamaritan = getOrCreateSamaritan(from.toHex()).samaritan
+  let samaritanResult = getOrCreateSamaritan(to.toHex())
   
+  let samaritan = samaritanResult.samaritan
+  
+  // Increase total token transfers by one
+  stats.totalTransfers = stats.totalTransfers + 1
 
   // Update the holdCount for each samaritan.
-  fromSamaritan.troveCount = fromSamaritan.troveCount - 1
-  samaritan.troveCount = samaritan.troveCount + 1
+  fromSamaritan.currentCollectionCount = fromSamaritan.currentCollectionCount - 1
+  samaritan.currentCollectionCount = samaritan.currentCollectionCount + 1
+
+  // Update the total historical holders if it's a new user.
+  if (samaritanResult.created){
+    stats.totalHistoricalHolders = stats.totalHistoricalHolders + 1
+  }
+
+  // Update the total holders count.
+  if (samaritan.currentCollectionCount == 1){
+    stats.totalHolders = stats.totalHolders + 1
+  }
+  if (fromSamaritan.currentCollectionCount == 0){
+    stats.totalHolders = stats.totalHolders - 1
+  }
 
   // Update the owner info.
   let token = getOrCreateVoxosToken(tokenId.toString())
@@ -84,9 +114,9 @@ export function handleTransfer(event: Transfer): void {
   // Create a hodl history if not exists.
   let created = CreateIfNotExistsVoxoHistoricalHodl(samaritan.id, tokenId.toString())
   
-  // Increase holdHistCount if the samaritan didn't own this trove previously.
+  // Increase holdHistoryCount if the samaritan didn't own this token previously.
   if (created) {
-    samaritan.holdHistCount = samaritan.holdHistCount + 1
+    samaritan.holdHistoryCount = samaritan.holdHistoryCount + 1
   }
   
   // Check if it's a mint or a burn event.
@@ -118,7 +148,7 @@ export function handleTransfer(event: Transfer): void {
     samaritan.burnCount = samaritan.burnCount + 1
   }
 
-  // Update objects.
+  // Update objects
   stats.save()
   samaritan.save()
   fromSamaritan.save()
