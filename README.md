@@ -1,23 +1,27 @@
 # VoxoDeus Subgraph 
-
-This subgraph was built in order to make the following tasks easier, since it would take too long to determine with quering a single node. 
-
-    1. Determine which voxos a user owns 
-    2. Determine which voxos a user minted 
-    3. Determine all the voxos a user owned historically 
-
-
+Prerequisites
+    
+    move .env.exampe to .env and edit the NODE_URL
+    Run graph node locally using docker-compore up
+    yarn codegen
+    yarn build
+    yarn create-local
+    yarn deploy-local
 
 
 ## [Entities](./schema.graphql)
 
-1. VoxoSamaritan: User information, each Voxo user will have his own entitiy which can be acesses by using the users address as the id 
-2. VoxoStats: id is always '1', stores general universal statistics 
-3. MintEvent: stores every mint event 
+__VoxoSamaritan__: User information, each Voxo user will have his own entitiy which can be acesses by using the users address as the id   
+__VoxoStats__: id is always '1', stores general universal statistics  
+__MintEvent__: stores every mint event  
+__BurnEvent__: stores every burn event  
+__VoxoToken__: token id and current owner  
+__VoxoHistoricalHodl__: stores historical owners of a token  
+
 
 ## Example Queries: 
-1. Query a list of all minters
-```
+### Query a list of all minters
+```graphql
 {
   voxoSamaritans(where: {mintCount_gt: 0}, orderBy: mintCount, orderDirection: desc){
     id
@@ -25,8 +29,8 @@ This subgraph was built in order to make the following tasks easier, since it wo
   }
 }
 ```
-2. Query a list of all holders
-```
+### Query a list of all holders
+```graphql
 {
   voxoSamaritans(where: {holdHistCount_gt: 0}, orderBy: holdHistCount, orderDirection: desc){
     id
@@ -34,8 +38,8 @@ This subgraph was built in order to make the following tasks easier, since it wo
   }
 }
 ```
-3. Query a list of current holders
-```
+### Query a list of current holders
+```graphql
 {
   voxoSamaritans(where: {troveCount_gt: 0}, orderBy: troveCount, orderDirection: desc){
     id
@@ -43,8 +47,8 @@ This subgraph was built in order to make the following tasks easier, since it wo
   }
 }
 ```
-4. Query by user address, and this should show the unique ids of VoxoDeus NFT’s minted + held + historically owned + numbers for each
-```
+### Query by user address, and this should show the unique ids of VoxoDeus NFT’s minted + held + historically owned + numbers for each
+```graphql
 {
    voxoSamaritan(id: "0xc212f04685cfcc8444d3b8368f045e2a2675c039"){
     id
@@ -63,10 +67,10 @@ This subgraph was built in order to make the following tasks easier, since it wo
   }
 }
 ```
-5. Query a list of top minters, top holders and top historical holders   
+### Query a list of top minters, top holders and top historical holders   
 
-__Querying the top ten minters__
-```
+*Querying the top ten minters*
+```graphql
 {
   voxoSamaritans(first: 10, where: {mintCount_gt: 0}, orderBy: mintCount, orderDirection: desc){
     id
@@ -74,8 +78,8 @@ __Querying the top ten minters__
   }
 }
 ```
-__Querying the top ten historical holders__
-```
+*Querying the top ten historical holders*
+```graphql
 {
   voxoSamaritans(first: 10, where: {holdHistCount_gt: 0}, orderBy: holdHistCount, orderDirection: desc){
     id
@@ -83,8 +87,8 @@ __Querying the top ten historical holders__
   }
 }
 ```
-__Querying the top ten holders__
-```
+*Querying the top ten holders*
+```graphql
 {
   voxoSamaritans(first: 10, where: {troveCount_gt: 0}, orderBy: troveCount, orderDirection: desc){
     id
@@ -92,29 +96,25 @@ __Querying the top ten holders__
   }
 }
 ```
-6. Get the total voxos minted 
-
-```
+### Query the total voxos minted and burned
+```graphql
 {
   voxoStats(id:"1"){
     totalMinted
-    histHodlers
+    totalBurned
   }
 }
 ```
-7. Query the first 5 VoxoSamaritans 
-
-```
+### Query the current owner and the historical owners of a token
+```graphql
 {
-  voxoSamaritans(first: 5) {
-    id
-    trove
-    hodlHist
-    mintHist {
-      tokenId
-      timestamp
+  voxoToken(id: "25"){
+    ownerHist{
+      id
+    }
+    user{
+      id
     }
   }
 }
-
 ```
