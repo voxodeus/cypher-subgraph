@@ -6,7 +6,7 @@ import {
 import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, VoxoToken, VoxoHistoricalHodl} from "../generated/schema"
 
 
-let ZERO_ADDRESS = i32(0)
+let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 function getOrCreateVoxosStats(): VoxoStats {
   // load stats (create if doesn't exist, not id is always '1' )
@@ -45,7 +45,7 @@ function getOrCreateVoxosToken(tokenId: string): VoxoToken {
 
 function CreateIfNotExistsVoxoHistoricalHodl(samaritanId: string, tokenId: string):  boolean {
   // load historical hodl (create if doesn't exist)
-  let id = `${samaritanId}-${tokenId}`
+  let id = samaritanId + "-" + tokenId
   let created = false
   let historicalHodl = VoxoHistoricalHodl.load(id)
   if (historicalHodl == null){
@@ -65,11 +65,8 @@ export function handleTransfer(event: Transfer): void {
   let from = event.params.from
   let tokenId = event.params.tokenId.toI32()
   let txid = event.transaction.hash.toHexString()
-  // assume its not a mint 
-  let mint = false
-  // assume its not a burn 
-  let burn = false
 
+  // Get or create entities.
   let stats = getOrCreateVoxosStats()
   let fromSamaritan = getOrCreateSamaritan(from.toHex())
   let samaritan = getOrCreateSamaritan(to.toHex())
@@ -85,7 +82,7 @@ export function handleTransfer(event: Transfer): void {
   token.save()
 
   // Create a hodl history if not exists.
-  let created = CreateIfNotExistsVoxoHistoricalHodl(tokenId.toString(), samaritan.id)
+  let created = CreateIfNotExistsVoxoHistoricalHodl(samaritan.id, tokenId.toString())
   
   // Increase holdHistCount if the samaritan didn't own this trove previously.
   if (created) {
@@ -93,7 +90,7 @@ export function handleTransfer(event: Transfer): void {
   }
   
   // Check if it's a mint or a burn event.
-  if (from.toI32() == ZERO_ADDRESS){
+  if (from.toHex() == ZERO_ADDRESS){
     let mintEvent = new MintEvent(txid)
     mintEvent.type = "MINT"
     mintEvent.blockNumber =  event.block.number
@@ -106,7 +103,7 @@ export function handleTransfer(event: Transfer): void {
     stats.totalMinted = stats.totalMinted + 1
     samaritan.mintCount = samaritan.mintCount + 1
   }
-  else if (to.toI32() == ZERO_ADDRESS){
+  else if (to.toHex() == ZERO_ADDRESS){
     // Add the burn event.
     let burnEvent = new BurnEvent(txid)
     burnEvent.type = "BURN"
@@ -124,5 +121,6 @@ export function handleTransfer(event: Transfer): void {
   // Update objects.
   stats.save()
   samaritan.save()
+  fromSamaritan.save()
 }
 
