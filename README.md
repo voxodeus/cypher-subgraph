@@ -16,7 +16,7 @@ __VoxoStats__: id is always '1', stores general universal statistics
 __MintEvent__: stores every mint event  
 __BurnEvent__: stores every burn event  
 __VoxoToken__: token id and current owner  
-__VoxoHistoricalHodl__: stores historical owners of a token  
+__VoxoHistoricalHold__: stores historical owners of a token  
 
 
 ## Example Queries: 
@@ -32,18 +32,18 @@ __VoxoHistoricalHodl__: stores historical owners of a token
 ### Query a list of all holders
 ```graphql
 {
-  voxoSamaritans(where: {holdHistCount_gt: 0}, orderBy: holdHistCount, orderDirection: desc){
+  voxoSamaritans(where: {holdHistoryCount_gt: 0}, orderBy: holdHistoryCount, orderDirection: desc){
     id
-    holdHistCount
+    holdHistoryCount
   }
 }
 ```
 ### Query a list of current holders
 ```graphql
 {
-  voxoSamaritans(where: {troveCount_gt: 0}, orderBy: troveCount, orderDirection: desc){
+  voxoSamaritans(where: {currentCollectionCount_gt: 0}, orderBy: currentCollectionCount, orderDirection: desc){
     id
-    troveCount
+    currentCollectionCount
   }
 }
 ```
@@ -53,15 +53,15 @@ __VoxoHistoricalHodl__: stores historical owners of a token
    voxoSamaritan(id: "0xc212f04685cfcc8444d3b8368f045e2a2675c039"){
     id
     mintCount
-    mintHist{
+    mints{
       tokenId
     }
-    troveCount
-    trove{
+    currentCollectionCount
+    currentCollection{
       id
     }
-    holdHistCount
-    hodlHist{
+    holdHistoryCount
+    holdHistory{
       id
     }
   }
@@ -81,18 +81,18 @@ __VoxoHistoricalHodl__: stores historical owners of a token
 *Querying the top ten historical holders*
 ```graphql
 {
-  voxoSamaritans(first: 10, where: {holdHistCount_gt: 0}, orderBy: holdHistCount, orderDirection: desc){
+  voxoSamaritans(first: 10, where: {holdHistoryCount_gt: 0}, orderBy: holdHistoryCount, orderDirection: desc){
     id
-    holdHistCount
+    holdHistoryCount
   }
 }
 ```
 *Querying the top ten holders*
 ```graphql
 {
-  voxoSamaritans(first: 10, where: {troveCount_gt: 0}, orderBy: troveCount, orderDirection: desc){
+  voxoSamaritans(first: 10, where: {currentCollectionCount_gt: 0}, orderBy: currentCollectionCount, orderDirection: desc){
     id
-    troveCount
+    currentCollectionCount
   }
 }
 ```

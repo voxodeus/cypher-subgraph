@@ -32,6 +32,10 @@ type VoxoToken @entity {
   id: ID!
   # current owner
   user: VoxoSamaritan
+  # minter of this token
+  minter: VoxoSamaritan
+  # burner of this token, it's null usually
+  burner: VoxoSamaritan
   # historical owners
   ownerHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "token")
 }

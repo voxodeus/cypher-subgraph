@@ -179,6 +179,40 @@ export class VoxoToken extends Entity {
     }
   }
 
+  get minter(): string | null {
+    let value = this.get("minter");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set minter(value: string | null) {
+    if (value === null) {
+      this.unset("minter");
+    } else {
+      this.set("minter", Value.fromString(value as string));
+    }
+  }
+
+  get burner(): string | null {
+    let value = this.get("burner");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set burner(value: string | null) {
+    if (value === null) {
+      this.unset("burner");
+    } else {
+      this.set("burner", Value.fromString(value as string));
+    }
+  }
+
   get ownerHistory(): Array<string> {
     let value = this.get("ownerHistory");
     return value.toStringArray();

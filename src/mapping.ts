@@ -109,7 +109,6 @@ export function handleTransfer(event: Transfer): void {
   // Update the owner info.
   let token = getOrCreateVoxosToken(tokenId.toString())
   token.user = samaritan.id
-  token.save()
 
   // Create a hodl history if not exists.
   let created = CreateIfNotExistsVoxoHistoricalHodl(samaritan.id, tokenId.toString())
@@ -132,6 +131,8 @@ export function handleTransfer(event: Transfer): void {
     // Increase mint count for the samaritan and stats.
     stats.totalMinted = stats.totalMinted + 1
     samaritan.mintCount = samaritan.mintCount + 1
+
+    token.minter = samaritan.id
   }
   else if (to.toHex() == ZERO_ADDRESS){
     // Add the burn event.
@@ -146,9 +147,12 @@ export function handleTransfer(event: Transfer): void {
     // Increase burn count for the samaritan and stats.
     stats.totalBurned = stats.totalBurned + 1
     samaritan.burnCount = samaritan.burnCount + 1
+
+    token.burner = samaritan.id
   }
 
   // Update objects
+  token.save()
   stats.save()
   samaritan.save()
   fromSamaritan.save()
