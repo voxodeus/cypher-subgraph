@@ -223,6 +223,73 @@ export class VoxoToken extends Entity {
   }
 }
 
+export class VoxoSale extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save VoxoSale entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save VoxoSale entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("VoxoSale", id.toString(), this);
+  }
+
+  static load(id: string): VoxoSale | null {
+    return store.get("VoxoSale", id) as VoxoSale | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get seller(): string {
+    let value = this.get("seller");
+    return value.toString();
+  }
+
+  set seller(value: string) {
+    this.set("seller", Value.fromString(value));
+  }
+
+  get buyer(): string {
+    let value = this.get("buyer");
+    return value.toString();
+  }
+
+  set buyer(value: string) {
+    this.set("buyer", Value.fromString(value));
+  }
+
+  get price(): BigInt {
+    let value = this.get("price");
+    return value.toBigInt();
+  }
+
+  set price(value: BigInt) {
+    this.set("price", Value.fromBigInt(value));
+  }
+
+  get market(): string {
+    let value = this.get("market");
+    return value.toString();
+  }
+
+  set market(value: string) {
+    this.set("market", Value.fromString(value));
+  }
+}
+
 export class VoxoHistoricalHold extends Entity {
   constructor(id: string) {
     super();
@@ -467,6 +534,90 @@ export class BurnEvent extends Entity {
 
   static load(id: string): BurnEvent | null {
     return store.get("BurnEvent", id) as BurnEvent | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get type(): string {
+    let value = this.get("type");
+    return value.toString();
+  }
+
+  set type(value: string) {
+    this.set("type", Value.fromString(value));
+  }
+
+  get blockNumber(): BigInt {
+    let value = this.get("blockNumber");
+    return value.toBigInt();
+  }
+
+  set blockNumber(value: BigInt) {
+    this.set("blockNumber", Value.fromBigInt(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get user(): string | null {
+    let value = this.get("user");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
+  }
+
+  get tokenId(): i32 {
+    let value = this.get("tokenId");
+    return value.toI32();
+  }
+
+  set tokenId(value: i32) {
+    this.set("tokenId", Value.fromI32(value));
+  }
+}
+
+export class TransferEvent extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save TransferEvent entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save TransferEvent entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("TransferEvent", id.toString(), this);
+  }
+
+  static load(id: string): TransferEvent | null {
+    return store.get("TransferEvent", id) as TransferEvent | null;
   }
 
   get id(): string {

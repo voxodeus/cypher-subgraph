@@ -40,6 +40,25 @@ type VoxoToken @entity {
   ownerHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "token")
 }
 
+enum Market {
+  OPENSEA
+  OTHERS
+}
+
+# sales history for a token
+type VoxoSale @entity{
+  # transaction id
+  id: ID!
+  # seller user
+  seller: VoxoSamaritan!
+  # buyer user
+  buyer: VoxoSamaritan!
+  # price for this sale
+  price: BigInt!
+  # market for this sale
+  market: Market!
+}
+
 # This is more efficient for upserting into the historical owners
 type VoxoHistoricalHold @entity {
   # token id + user id
@@ -49,6 +68,7 @@ type VoxoHistoricalHold @entity {
   # token
   token: VoxoToken
 }
+
 
 
 type VoxoStats @entity {

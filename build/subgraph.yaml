@@ -21,6 +21,8 @@ dataSources:
       abis:
         - name: VoxoDeus
           file: VoxoDeus/abis/VoxoDeus.json
+        - name: OpenSea
+          file: VoxoDeus/abis/OpenSea.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer

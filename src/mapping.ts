@@ -1,9 +1,12 @@
-import { Address} from "@graphprotocol/graph-ts"
+import { Address, Bytes, ethereum} from "@graphprotocol/graph-ts"
 
 import {
   Transfer
 } from "../generated/VoxoDeus/VoxoDeus"
-import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, VoxoToken, VoxoHistoricalHold} from "../generated/schema"
+import {
+  OrdersMatched, OpenSea
+} from "../generated/VoxoDeus/OpenSea"
+import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, TransferEvent, VoxoToken, VoxoHistoricalHold, VoxoSale, VoxoSale} from "../generated/schema"
 
 
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -56,6 +59,13 @@ function getOrCreateVoxosToken(tokenId: string): VoxoToken {
   return token as VoxoToken
 }
 
+// function CreateVoxosSale(saleId: string): VoxoSale {
+//   // load token (create if doesn't exist)
+//   OrdersMatched.bin
+//   let sale = new VoxoSale(saleId)
+//   return sale as VoxoSale
+// }
+
 function CreateIfNotExistsVoxoHistoricalHodl(samaritanId: string, tokenId: string):  boolean {
   // load historical hodl (create if doesn't exist)
   let id = samaritanId + "-" + tokenId
@@ -78,6 +88,9 @@ export function handleTransfer(event: Transfer): void {
   let from = event.params.from
   let tokenId = event.params.tokenId.toI32()
   let txid = event.transaction.hash.toHexString()
+
+  event.transaction
+
 
   // Get or create entities.
   let stats = getOrCreateVoxosStats()
@@ -149,6 +162,28 @@ export function handleTransfer(event: Transfer): void {
     samaritan.burnCount = samaritan.burnCount + 1
 
     token.burner = samaritan.id
+  } else {
+    // Add the transfer event.
+    let transferEvent = new TransferEvent(txid)
+    transferEvent.type = "TRANSFER"
+    transferEvent.blockNumber =  event.block.number
+    transferEvent.timestamp = event.block.timestamp
+    transferEvent.user = samaritan.id
+    transferEvent.tokenId = tokenId
+    transferEvent.save()
+
+    // Add a VoxoSale if needed.
+    if (event.transaction.hash.toHex() == txid) {
+      // It's an OpenSea sale.
+      let sale = new VoxoSale(txid)
+      sale.seller = fromSamaritan.id
+      sale.buyer = samaritan.id
+      sale.market = "OPENSEA"
+      
+      let ordersMatchedEvent = OpenSea.bind(txid).
+      ordersMatchedEvent
+
+    }
   }
 
   // Update objects
@@ -157,4 +192,3 @@ export function handleTransfer(event: Transfer): void {
   samaritan.save()
   fromSamaritan.save()
 }
-

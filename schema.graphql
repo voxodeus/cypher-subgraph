@@ -40,6 +40,25 @@ type VoxoToken @entity {
   ownerHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "token")
 }
 
+enum Market {
+  OPENSEA
+  OTHERS
+}
+
+# sales history for a token
+type VoxoSale @entity{
+  # transaction id
+  id: ID!
+  # seller user
+  seller: VoxoSamaritan!
+  # buyer user
+  buyer: VoxoSamaritan!
+  # price for this sale
+  price: BigInt!
+  # market for this sale
+  market: Market!
+}
+
 # This is more efficient for upserting into the historical owners
 type VoxoHistoricalHold @entity {
   # token id + user id
@@ -49,6 +68,7 @@ type VoxoHistoricalHold @entity {
   # token
   token: VoxoToken
 }
+
 
 
 type VoxoStats @entity {
@@ -69,7 +89,7 @@ type VoxoStats @entity {
 enum EventType {
   MINT
   BURN
-
+  TRANSFER
 }
 
 interface Event {
@@ -114,5 +134,20 @@ type BurnEvent implements Event @entity {
   # user who burned the voxo 
   user: VoxoSamaritan
   # tokenId of Voxo burned 
+  tokenId: Int! 
+}
+
+type TransferEvent implements Event @entity {
+  # transaction hash of transfer event 
+  id: ID!
+  # transfer type
+  type: EventType!
+  # block number of transfer event
+  blockNumber: BigInt!
+  # timestamp of transfer event 
+  timestamp: BigInt! 
+  # user who transferred the voxo 
+  user: VoxoSamaritan
+  # tokenId of Voxo transferred 
   tokenId: Int! 
 }
