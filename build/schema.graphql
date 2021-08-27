@@ -45,16 +45,26 @@ enum Market {
   OTHERS
 }
 
+# ERC20 token information
+type ERC20Token @entity{
+  # token address
+  id: ID!
+  # token decimals
+  decimals: BigInt!
+  # token symbol
+  symbol: Bytes!
+}
+
 # sales history for a token
 type VoxoSale @entity{
   # transaction id
   id: ID!
-  # seller user
-  seller: VoxoSamaritan!
-  # buyer user
-  buyer: VoxoSamaritan!
+  # maker user
+  event: TransferEvent
+  # token of the payment
+  token: ERC20Token!
   # price for this sale
-  price: BigInt!
+  price: BigDecimal!
   # market for this sale
   market: Market!
 }
@@ -89,7 +99,7 @@ type VoxoStats @entity {
 enum EventType {
   MINT
   BURN
-
+  TRANSFER
 }
 
 interface Event {
@@ -135,4 +145,19 @@ type BurnEvent implements Event @entity {
   user: VoxoSamaritan
   # tokenId of Voxo burned 
   tokenId: Int! 
+}
+
+type TransferEvent implements Event @entity {
+  # transaction hash of transfer event 
+  id: ID!
+  # transfer type
+  type: EventType!
+  # block number of transfer event
+  blockNumber: BigInt!
+  # timestamp of transfer event 
+  timestamp: BigInt! 
+  # user who transferred the voxo 
+  user: VoxoSamaritan
+  # tokenId of Voxo transferred 
+  tokenId: Int!
 }

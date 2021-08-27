@@ -1,12 +1,15 @@
-import { Address, Bytes, ethereum} from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, Bytes, BigInt, ByteArray, log} from "@graphprotocol/graph-ts"
 
 import {
-  Transfer
+  Transfer, VoxoDeus
 } from "../generated/VoxoDeus/VoxoDeus"
+import {
+  ERC20
+} from "../generated/OpenSea/ERC20"
 import {
   OrdersMatched, OpenSea
 } from "../generated/VoxoDeus/OpenSea"
-import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, TransferEvent, VoxoToken, VoxoHistoricalHold, VoxoSale, VoxoSale} from "../generated/schema"
+import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, TransferEvent, VoxoToken, VoxoHistoricalHold, VoxoSale, ERC20Token} from "../generated/schema"
 
 
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -162,33 +165,75 @@ export function handleTransfer(event: Transfer): void {
     samaritan.burnCount = samaritan.burnCount + 1
 
     token.burner = samaritan.id
-  } else {
-    // Add the transfer event.
-    let transferEvent = new TransferEvent(txid)
-    transferEvent.type = "TRANSFER"
-    transferEvent.blockNumber =  event.block.number
-    transferEvent.timestamp = event.block.timestamp
-    transferEvent.user = samaritan.id
-    transferEvent.tokenId = tokenId
-    transferEvent.save()
+  } 
 
-    // Add a VoxoSale if needed.
-    if (event.transaction.hash.toHex() == txid) {
-      // It's an OpenSea sale.
-      let sale = new VoxoSale(txid)
-      sale.seller = fromSamaritan.id
-      sale.buyer = samaritan.id
-      sale.market = "OPENSEA"
-      
-      let ordersMatchedEvent = OpenSea.bind(txid).
-      ordersMatchedEvent
-
-    }
-  }
+  // Add the transfer event.
+  // We need this to match the OpenSea sales.
+  let transferEvent = new TransferEvent(txid)
+  transferEvent.type = "TRANSFER"
+  transferEvent.blockNumber =  event.block.number
+  transferEvent.timestamp = event.block.timestamp
+  transferEvent.user = samaritan.id
+  transferEvent.tokenId = tokenId
+  transferEvent.save()
 
   // Update objects
   token.save()
   stats.save()
   samaritan.save()
   fromSamaritan.save()
+}
+
+
+// Auxiliary function
+function buf2hex(buffer: Uint8Array): string {
+  let len = buffer.length
+  let bytes = new Bytes(20)
+  // Skip on zero paddings.
+  for(let i: i32 = 12; i < len; i++) {
+    // copy to array
+    bytes[i-12] = buffer[i]
+  }
+  return bytes.toHex()
+}
+
+function getERC20Token(tokenAddress: string): ERC20Token{
+  if (tokenAddress == ZERO_ADDRESS){
+    let ethereum = ERC20Token.load(ZERO_ADDRESS)
+    if (ethereum == null) {
+      ethereum = new ERC20Token(ZERO_ADDRESS)
+      ethereum.decimals = BigInt.fromI32(18)
+      ethereum.symbol =  Bytes.fromUTF8("ETH") as Bytes
+    }
+    return ethereum as ERC20Token
+  }
+  let token = ERC20Token.load(tokenAddress)
+  if (token == null){
+    let erc20 = ERC20.bind(Bytes.fromHexString(tokenAddress) as Address)
+    token = new ERC20Token(tokenAddress)
+    token.decimals = BigInt.fromI32(erc20.decimals())
+    token.symbol = Bytes.fromUTF8(erc20.symbol()) as Bytes
+    token.save()
+  }
+  return token as ERC20Token
+}
+
+// We react to only OrdersMatched events of OpenSea 
+export function handleOrdersMatched(event: OrdersMatched): void {
+     // Add a VoxoSale if needed.
+     log.info('ORDERS_MATCHED_EVT is: {}', [event.transaction.input.toHexString()])
+     let nftContract = buf2hex(event.transaction.input.subarray(132, 164))
+     log.info('NFT_CONTRACT_ADDR is: {}', [nftContract])
+     if (buf2hex(event.transaction.input.subarray(132, 164)) == "0xafbA8C6B3875868a90E5055e791213258a9fe7a7") {
+      // It's an OpenSea sale.
+      let sale = new VoxoSale(event.transaction.hash.toString())
+      sale.event = event.transaction.hash.toHex()
+      sale.market = "OPENSEA"
+      let erc20Token = buf2hex(event.transaction.input.subarray(196, 128))
+      log.info('ERC20_TOKEN is: {}', [erc20Token])
+      let token = getERC20Token(erc20Token)
+      sale.token = token.id
+      sale.price = event.params.price.toBigDecimal().div(token.decimals.toBigDecimal())
+      sale.save()
+    }
 }

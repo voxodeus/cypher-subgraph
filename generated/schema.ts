@@ -130,6 +130,15 @@ export class VoxoSamaritan extends Entity {
   set burns(value: Array<string>) {
     this.set("burns", Value.fromStringArray(value));
   }
+
+  get kir(): Array<Bytes> {
+    let value = this.get("kir");
+    return value.toBytesArray();
+  }
+
+  set kir(value: Array<Bytes>) {
+    this.set("kir", Value.fromBytesArray(value));
+  }
 }
 
 export class VoxoToken extends Entity {
@@ -223,6 +232,55 @@ export class VoxoToken extends Entity {
   }
 }
 
+export class ERC20Token extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save ERC20Token entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save ERC20Token entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("ERC20Token", id.toString(), this);
+  }
+
+  static load(id: string): ERC20Token | null {
+    return store.get("ERC20Token", id) as ERC20Token | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get decimals(): BigInt {
+    let value = this.get("decimals");
+    return value.toBigInt();
+  }
+
+  set decimals(value: BigInt) {
+    this.set("decimals", Value.fromBigInt(value));
+  }
+
+  get symbol(): Bytes {
+    let value = this.get("symbol");
+    return value.toBytes();
+  }
+
+  set symbol(value: Bytes) {
+    this.set("symbol", Value.fromBytes(value));
+  }
+}
+
 export class VoxoSale extends Entity {
   constructor(id: string) {
     super();
@@ -253,31 +311,39 @@ export class VoxoSale extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get seller(): string {
-    let value = this.get("seller");
+  get event(): string | null {
+    let value = this.get("event");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set event(value: string | null) {
+    if (value === null) {
+      this.unset("event");
+    } else {
+      this.set("event", Value.fromString(value as string));
+    }
+  }
+
+  get token(): string {
+    let value = this.get("token");
     return value.toString();
   }
 
-  set seller(value: string) {
-    this.set("seller", Value.fromString(value));
+  set token(value: string) {
+    this.set("token", Value.fromString(value));
   }
 
-  get buyer(): string {
-    let value = this.get("buyer");
-    return value.toString();
-  }
-
-  set buyer(value: string) {
-    this.set("buyer", Value.fromString(value));
-  }
-
-  get price(): BigInt {
+  get price(): BigDecimal {
     let value = this.get("price");
-    return value.toBigInt();
+    return value.toBigDecimal();
   }
 
-  set price(value: BigInt) {
-    this.set("price", Value.fromBigInt(value));
+  set price(value: BigDecimal) {
+    this.set("price", Value.fromBigDecimal(value));
   }
 
   get market(): string {
