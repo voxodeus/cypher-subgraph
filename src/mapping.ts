@@ -1,4 +1,4 @@
-import { Address, BigDecimal, Bytes, BigInt, ByteArray, log} from "@graphprotocol/graph-ts"
+import { Address, BigDecimal, Bytes, BigInt, ByteArray, log, ethereum} from "@graphprotocol/graph-ts"
 
 import {
   Transfer, VoxoDeus
@@ -9,10 +9,11 @@ import {
 import {
   OrdersMatched, OpenSea
 } from "../generated/VoxoDeus/OpenSea"
-import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, TransferEvent, VoxoToken, VoxoHistoricalHold, VoxoSale, ERC20Token} from "../generated/schema"
+import { VoxoSamaritan, VoxoStats, MintEvent, BurnEvent, VoxoToken, VoxoHistoricalHold, VoxoSale, ERC20Token} from "../generated/schema"
 
 
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+let ATOMIC_MATCH_FUNC = "0xab834bab"
 
 function getOrCreateVoxosStats(): VoxoStats {
   // load stats (create if doesn't exist, not id is always '1' )
@@ -46,6 +47,7 @@ function getOrCreateSamaritan(samaritanId: string): CreateSamaritanResult {
     samaritan = new VoxoSamaritan(samaritanId)
     samaritan.burnCount = 0
     samaritan.mintCount = 0
+    samaritan.saleCount = 0
     samaritan.holdHistoryCount = 0
     samaritan.currentCollectionCount = 0
     created = true
@@ -61,13 +63,6 @@ function getOrCreateVoxosToken(tokenId: string): VoxoToken {
   }
   return token as VoxoToken
 }
-
-// function CreateVoxosSale(saleId: string): VoxoSale {
-//   // load token (create if doesn't exist)
-//   OrdersMatched.bin
-//   let sale = new VoxoSale(saleId)
-//   return sale as VoxoSale
-// }
 
 function CreateIfNotExistsVoxoHistoricalHodl(samaritanId: string, tokenId: string):  boolean {
   // load historical hodl (create if doesn't exist)
@@ -91,9 +86,6 @@ export function handleTransfer(event: Transfer): void {
   let from = event.params.from
   let tokenId = event.params.tokenId.toI32()
   let txid = event.transaction.hash.toHexString()
-
-  event.transaction
-
 
   // Get or create entities.
   let stats = getOrCreateVoxosStats()
@@ -167,15 +159,14 @@ export function handleTransfer(event: Transfer): void {
     token.burner = samaritan.id
   } 
 
-  // Add the transfer event.
-  // We need this to match the OpenSea sales.
-  let transferEvent = new TransferEvent(txid)
-  transferEvent.type = "TRANSFER"
-  transferEvent.blockNumber =  event.block.number
-  transferEvent.timestamp = event.block.timestamp
-  transferEvent.user = samaritan.id
-  transferEvent.tokenId = tokenId
-  transferEvent.save()
+  // Check if it's a atmoicMatch_ contract call.
+  if (event.transaction.input != null && 
+    event.transaction.input.length > 0 &&
+    buf2hex(event.transaction.input.subarray(0,4), 0, 4).toHex() == ATOMIC_MATCH_FUNC
+    ) {
+      handleAtomicMatch_(event.transaction, event.block.timestamp, fromSamaritan.id, samaritan.id)
+      samaritan.saleCount =   samaritan.saleCount + 1
+  }
 
   // Update objects
   token.save()
@@ -186,15 +177,20 @@ export function handleTransfer(event: Transfer): void {
 
 
 // Auxiliary function
-function buf2hex(buffer: Uint8Array): string {
+function buf2hex(buffer: Uint8Array, paddingSize: i32 = 12, length: i32 = 32): Bytes {
   let len = buffer.length
-  let bytes = new Bytes(20)
+  let bytes = new Bytes(length-paddingSize)
   // Skip on zero paddings.
-  for(let i: i32 = 12; i < len; i++) {
+  for(let i: i32 = paddingSize; i < len; i++) {
     // copy to array
-    bytes[i-12] = buffer[i]
+    bytes[i-paddingSize] = buffer[i]
   }
-  return bytes.toHex()
+  return bytes as Bytes
+}
+
+// Auxiliary function
+function buf2big(buffer: Uint8Array): BigInt {
+  return (buffer as Uint8Array).reverse() as BigInt
 }
 
 function getERC20Token(tokenAddress: string): ERC20Token{
@@ -203,7 +199,8 @@ function getERC20Token(tokenAddress: string): ERC20Token{
     if (ethereum == null) {
       ethereum = new ERC20Token(ZERO_ADDRESS)
       ethereum.decimals = BigInt.fromI32(18)
-      ethereum.symbol =  Bytes.fromUTF8("ETH") as Bytes
+      ethereum.symbol = "ETH"
+      ethereum.save()
     }
     return ethereum as ERC20Token
   }
@@ -212,28 +209,28 @@ function getERC20Token(tokenAddress: string): ERC20Token{
     let erc20 = ERC20.bind(Bytes.fromHexString(tokenAddress) as Address)
     token = new ERC20Token(tokenAddress)
     token.decimals = BigInt.fromI32(erc20.decimals())
-    token.symbol = Bytes.fromUTF8(erc20.symbol()) as Bytes
+    token.symbol = erc20.symbol()
     token.save()
   }
   return token as ERC20Token
 }
 
-// We react to only OrdersMatched events of OpenSea 
-export function handleOrdersMatched(event: OrdersMatched): void {
-     // Add a VoxoSale if needed.
-     log.info('ORDERS_MATCHED_EVT is: {}', [event.transaction.input.toHexString()])
-     let nftContract = buf2hex(event.transaction.input.subarray(132, 164))
-     log.info('NFT_CONTRACT_ADDR is: {}', [nftContract])
-     if (buf2hex(event.transaction.input.subarray(132, 164)) == "0xafbA8C6B3875868a90E5055e791213258a9fe7a7") {
-      // It's an OpenSea sale.
-      let sale = new VoxoSale(event.transaction.hash.toString())
-      sale.event = event.transaction.hash.toHex()
-      sale.market = "OPENSEA"
-      let erc20Token = buf2hex(event.transaction.input.subarray(196, 128))
-      log.info('ERC20_TOKEN is: {}', [erc20Token])
-      let token = getERC20Token(erc20Token)
-      sale.token = token.id
-      sale.price = event.params.price.toBigDecimal().div(token.decimals.toBigDecimal())
-      sale.save()
-    }
+// Handle the atomicMatch_ contract call.
+export function handleAtomicMatch_(transaction: ethereum.Transaction, timestamp: BigInt, maker: string, taker: string): void {
+  // It's an OpenSea sale.
+  let sale = new VoxoSale(transaction.hash.toHex())
+  log.info('SALE_TX is: {}', [transaction.hash.toHex()])
+  sale.market = "OPENSEA"
+  sale.maker = maker
+  sale.taker = taker
+  let erc20Token = buf2hex(transaction.input.subarray(196, 228)).toHex()
+  log.info('ERC20_TOKEN is: {}', [erc20Token])
+  let token = getERC20Token(erc20Token)
+  sale.token = token.id
+  // Get the buyer price.
+  let price = buf2big(transaction.input.subarray(580, 612))
+  log.info('ERC20_TOKEN_PRICE is: {}', [price.toString()])
+  sale.price = price.toBigDecimal().div(BigInt.fromString("10").pow(token.decimals.toI32() as u8).toBigDecimal())
+  sale.timestamp = timestamp
+  sale.save()
 }

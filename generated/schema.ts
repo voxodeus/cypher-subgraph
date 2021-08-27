@@ -131,13 +131,22 @@ export class VoxoSamaritan extends Entity {
     this.set("burns", Value.fromStringArray(value));
   }
 
-  get kir(): Array<Bytes> {
-    let value = this.get("kir");
-    return value.toBytesArray();
+  get saleCount(): i32 {
+    let value = this.get("saleCount");
+    return value.toI32();
   }
 
-  set kir(value: Array<Bytes>) {
-    this.set("kir", Value.fromBytesArray(value));
+  set saleCount(value: i32) {
+    this.set("saleCount", Value.fromI32(value));
+  }
+
+  get sales(): Array<string> {
+    let value = this.get("sales");
+    return value.toStringArray();
+  }
+
+  set sales(value: Array<string>) {
+    this.set("sales", Value.fromStringArray(value));
   }
 }
 
@@ -271,13 +280,13 @@ export class ERC20Token extends Entity {
     this.set("decimals", Value.fromBigInt(value));
   }
 
-  get symbol(): Bytes {
+  get symbol(): string {
     let value = this.get("symbol");
-    return value.toBytes();
+    return value.toString();
   }
 
-  set symbol(value: Bytes) {
-    this.set("symbol", Value.fromBytes(value));
+  set symbol(value: string) {
+    this.set("symbol", Value.fromString(value));
   }
 }
 
@@ -311,21 +320,22 @@ export class VoxoSale extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get event(): string | null {
-    let value = this.get("event");
-    if (value === null || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toString();
-    }
+  get maker(): string {
+    let value = this.get("maker");
+    return value.toString();
   }
 
-  set event(value: string | null) {
-    if (value === null) {
-      this.unset("event");
-    } else {
-      this.set("event", Value.fromString(value as string));
-    }
+  set maker(value: string) {
+    this.set("maker", Value.fromString(value));
+  }
+
+  get taker(): string {
+    let value = this.get("taker");
+    return value.toString();
+  }
+
+  set taker(value: string) {
+    this.set("taker", Value.fromString(value));
   }
 
   get token(): string {
@@ -353,6 +363,15 @@ export class VoxoSale extends Entity {
 
   set market(value: string) {
     this.set("market", Value.fromString(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
   }
 }
 
@@ -600,90 +619,6 @@ export class BurnEvent extends Entity {
 
   static load(id: string): BurnEvent | null {
     return store.get("BurnEvent", id) as BurnEvent | null;
-  }
-
-  get id(): string {
-    let value = this.get("id");
-    return value.toString();
-  }
-
-  set id(value: string) {
-    this.set("id", Value.fromString(value));
-  }
-
-  get type(): string {
-    let value = this.get("type");
-    return value.toString();
-  }
-
-  set type(value: string) {
-    this.set("type", Value.fromString(value));
-  }
-
-  get blockNumber(): BigInt {
-    let value = this.get("blockNumber");
-    return value.toBigInt();
-  }
-
-  set blockNumber(value: BigInt) {
-    this.set("blockNumber", Value.fromBigInt(value));
-  }
-
-  get timestamp(): BigInt {
-    let value = this.get("timestamp");
-    return value.toBigInt();
-  }
-
-  set timestamp(value: BigInt) {
-    this.set("timestamp", Value.fromBigInt(value));
-  }
-
-  get user(): string | null {
-    let value = this.get("user");
-    if (value === null || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toString();
-    }
-  }
-
-  set user(value: string | null) {
-    if (value === null) {
-      this.unset("user");
-    } else {
-      this.set("user", Value.fromString(value as string));
-    }
-  }
-
-  get tokenId(): i32 {
-    let value = this.get("tokenId");
-    return value.toI32();
-  }
-
-  set tokenId(value: i32) {
-    this.set("tokenId", Value.fromI32(value));
-  }
-}
-
-export class TransferEvent extends Entity {
-  constructor(id: string) {
-    super();
-    this.set("id", Value.fromString(id));
-  }
-
-  save(): void {
-    let id = this.get("id");
-    assert(id !== null, "Cannot save TransferEvent entity without an ID");
-    assert(
-      id.kind == ValueKind.STRING,
-      "Cannot save TransferEvent entity with non-string ID. " +
-        'Considering using .toHex() to convert the "id" to a string.'
-    );
-    store.set("TransferEvent", id.toString(), this);
-  }
-
-  static load(id: string): TransferEvent | null {
-    return store.get("TransferEvent", id) as TransferEvent | null;
   }
 
   get id(): string {

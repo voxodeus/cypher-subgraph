@@ -23,32 +23,9 @@ dataSources:
           file: ./abis/VoxoDeus.json
         - name: OpenSea
           file: ./abis/OpenSea.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,indexed uint256)
-          handler: handleTransfer
-      file: ./src/mapping.ts
-  - kind: ethereum/contract
-    name: OpenSea
-    network: mainnet
-    source:
-      address: "0x7be8076f4ea4a4ad08075c2508e481d6c946d12b"
-      abi: OpenSea
-      startBlock: 12219560
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - VoxoSamaritan
-        - VoxoSale
-      abis:
-        - name: VoxoDeus
-          file: ./abis/VoxoDeus.json
-        - name: OpenSea
-          file: ./abis/OpenSea.json
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
-        - event:  OrdersMatched(bytes32,bytes32,indexed address,indexed address,uint256,indexed bytes32)
-          handler: handleOrdersMatched
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
       file: ./src/mapping.ts
