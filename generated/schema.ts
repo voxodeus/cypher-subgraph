@@ -239,6 +239,15 @@ export class VoxoToken extends Entity {
   set ownerHistory(value: Array<string>) {
     this.set("ownerHistory", Value.fromStringArray(value));
   }
+
+  get sales(): Array<string> {
+    let value = this.get("sales");
+    return value.toStringArray();
+  }
+
+  set sales(value: Array<string>) {
+    this.set("sales", Value.fromStringArray(value));
+  }
 }
 
 export class ERC20Token extends Entity {
@@ -345,6 +354,15 @@ export class VoxoSale extends Entity {
 
   set token(value: string) {
     this.set("token", Value.fromString(value));
+  }
+
+  get paymentToken(): string {
+    let value = this.get("paymentToken");
+    return value.toString();
+  }
+
+  set paymentToken(value: string) {
+    this.set("paymentToken", Value.fromString(value));
   }
 
   get price(): BigDecimal {

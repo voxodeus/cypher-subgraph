@@ -44,6 +44,8 @@ type VoxoToken @entity {
   burner: VoxoSamaritan
   # historical owners
   ownerHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "token")
+  # sales for this token
+  sales: [VoxoSale!]! @derivedFrom(field: "token")
 }
 
 enum Market {
@@ -69,8 +71,10 @@ type VoxoSale @entity{
   maker: VoxoSamaritan!
   # taker user
   taker: VoxoSamaritan!
+  # voxos token id
+  token: VoxoToken!
   # token of the payment
-  token: ERC20Token!
+  paymentToken: ERC20Token!
   # price for this sale
   price: BigDecimal!
   # market for this sale

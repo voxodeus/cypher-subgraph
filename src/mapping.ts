@@ -164,7 +164,7 @@ export function handleTransfer(event: Transfer): void {
     event.transaction.input.length > 0 &&
     buf2hex(event.transaction.input.subarray(0,4), 0, 4).toHex() == ATOMIC_MATCH_FUNC
     ) {
-      handleAtomicMatch_(event.transaction, event.block.timestamp, fromSamaritan.id, samaritan.id)
+      handleAtomicMatch_(event.transaction, event.block.timestamp, fromSamaritan.id, samaritan.id, tokenId.toString())
       samaritan.saleCount =   samaritan.saleCount + 1
   }
 
@@ -216,21 +216,22 @@ function getERC20Token(tokenAddress: string): ERC20Token{
 }
 
 // Handle the atomicMatch_ contract call.
-export function handleAtomicMatch_(transaction: ethereum.Transaction, timestamp: BigInt, maker: string, taker: string): void {
+export function handleAtomicMatch_(transaction: ethereum.Transaction, timestamp: BigInt, maker: string, taker: string, tokenId: string): void {
   // It's an OpenSea sale.
   let sale = new VoxoSale(transaction.hash.toHex())
   log.info('SALE_TX is: {}', [transaction.hash.toHex()])
   sale.market = "OPENSEA"
   sale.maker = maker
   sale.taker = taker
+  sale.token = tokenId
   let erc20Token = buf2hex(transaction.input.subarray(196, 228)).toHex()
   log.info('ERC20_TOKEN is: {}', [erc20Token])
-  let token = getERC20Token(erc20Token)
-  sale.token = token.id
+  let paymentToken = getERC20Token(erc20Token)
+  sale.paymentToken = paymentToken.id
   // Get the buyer price.
   let price = buf2big(transaction.input.subarray(580, 612))
   log.info('ERC20_TOKEN_PRICE is: {}', [price.toString()])
-  sale.price = price.toBigDecimal().div(BigInt.fromString("10").pow(token.decimals.toI32() as u8).toBigDecimal())
+  sale.price = price.toBigDecimal().div(BigInt.fromString("10").pow(paymentToken.decimals.toI32() as u8).toBigDecimal())
   sale.timestamp = timestamp
   sale.save()
 }
