@@ -121,3 +121,48 @@ __VoxoHistoricalHold__: stores historical owners of a token
   }
 }
 ```
+## Query the OpenSea sales data
+--------
+### Query the sales by user
+```graphql
+{
+  voxoSamaritans{
+    id
+    saleCount
+    sales {
+      id
+      taker{
+        id
+      }
+      token{
+        id
+      }
+      paymentToken{
+        symbol
+      }
+      price
+    }
+  }
+}
+```
+### Query the sales by token
+```graphql
+{
+  voxoTokens{
+    id
+    sales{
+      id
+      taker{
+        id
+      }
+      maker{
+        id
+      }
+      paymentToken{
+        symbol
+      }
+      price
+    }
+  }
+}
+```
