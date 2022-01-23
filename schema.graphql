@@ -1,34 +1,162 @@
 type VoxoSamaritan @entity {
   # user address 
   id: ID!
+
+  # stats
+  stats: VoxoStats
+
+  # current collection count
+  currentCollectionCount: Int
   # user current collection 
-  trove: [Int!]!
+  currentCollection: [VoxoToken!]! @derivedFrom(field: "user")
+  
+  # historical count of unique token owned by this user
+  holdHistoryCount: Int
   # user historical collection 
-  hodlHist: [Int!]!
-  # mint history for user 
-  mintHist: [MintEvent!]! @derivedFrom(field: "user")
+  holdHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "user")
+
+  # number of minted tokens
+  mintCount: Int
+  # minted tokens for this user
+  mints: [MintEvent!]! @derivedFrom(field: "user")
+
+  # number of burned tokens
+  burnCount: Int
+  # burned tokens by this user
+  burns: [BurnEvent!]! @derivedFrom(field: "user")
+
+  # number of sales
+  saleCount: Int
+  # sales by this user
+  sales: [VoxoSale!]! @derivedFrom(field: "maker")
+
 }
+
+# This is more efficient for querying, updating the tokens
+type VoxoToken @entity {
+  # token id
+  id: ID!
+  # current owner
+  user: VoxoSamaritan
+  # minter of this token
+  minter: VoxoSamaritan
+  # burner of this token, it's null usually
+  burner: VoxoSamaritan
+  # historical owners
+  ownerHistory: [VoxoHistoricalHold!]! @derivedFrom(field: "token")
+  # sales for this token
+  sales: [VoxoSale!]! @derivedFrom(field: "token")
+}
+
+enum Market {
+  OPENSEA
+  OTHERS
+}
+
+# ERC20 token information
+type ERC20Token @entity{
+  # token address
+  id: ID!
+  # token decimals
+  decimals: BigInt!
+  # token symbol
+  symbol: String!
+}
+
+# sales history for a token
+type VoxoSale @entity{
+  # transaction id
+  id: ID!
+  # maker user
+  maker: VoxoSamaritan!
+  # taker user
+  taker: VoxoSamaritan!
+  # voxos token id
+  token: VoxoToken!
+  # token of the payment
+  paymentToken: ERC20Token!
+  # price for this sale
+  price: BigDecimal!
+  # market for this sale
+  market: Market!
+  # timestamp of sale 
+  timestamp: BigInt! 
+}
+
+# This is more efficient for upserting into the historical owners
+type VoxoHistoricalHold @entity {
+  # token id + user id
+  id: ID!
+  # user
+  user: VoxoSamaritan
+  # token
+  token: VoxoToken
+}
+
+
 
 type VoxoStats @entity {
   # always 1
   id: ID!
   # the number of voxos minted all time 
   totalMinted: Int!
-  # list of all historical holders 
-  histHodlers: [Bytes!]!
-  # list of current owners 
-  currentHodlers: [Bytes!]!
+  # the number of voxos burned all time 
+  totalBurned: Int!
+  # the number of total token transfers
+  totalTransfers: Int!
+  # the number of voxos holders that have at least one token
+  totalHolders: Int!
+  # the number of total historical holders
+  totalHistoricalHolders: Int!
 }
 
-type MintEvent @entity {
+enum EventType {
+  MINT
+  BURN
+  TRANSFER
+}
+
+interface Event {
+  # transaction hash of event 
+  id: ID!
+  # either of mint and burn
+  type: EventType!
+  # block number of event
+  blockNumber: BigInt!
+  # timestamp of event 
+  timestamp: BigInt! 
+  # performer of event
+  user: VoxoSamaritan
+  # Affected tokenId 
+  tokenId: Int! 
+}
+
+type MintEvent implements Event @entity {
   # transaction hash of mint event 
   id: ID!
+  # mint type
+  type: EventType!
   # block number of mint event
   blockNumber: BigInt!
   # timestamp of mint event 
   timestamp: BigInt! 
   # user who minted the voxo 
-  user: VoxoSamaritan! 
+  user: VoxoSamaritan
   # tokenId of Voxo minted 
+  tokenId: Int! 
+}
+
+type BurnEvent implements Event @entity {
+  # transaction hash of burn event 
+  id: ID!
+  # burn type
+  type: EventType!
+  # block number of burn event
+  blockNumber: BigInt!
+  # timestamp of burn event 
+  timestamp: BigInt! 
+  # user who burned the voxo 
+  user: VoxoSamaritan
+  # tokenId of Voxo burned 
   tokenId: Int! 
 }

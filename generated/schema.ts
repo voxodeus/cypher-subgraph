@@ -42,31 +42,419 @@ export class VoxoSamaritan extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get trove(): Array<i32> {
-    let value = this.get("trove");
-    return value.toI32Array();
+  get stats(): string | null {
+    let value = this.get("stats");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
   }
 
-  set trove(value: Array<i32>) {
-    this.set("trove", Value.fromI32Array(value));
+  set stats(value: string | null) {
+    if (value === null) {
+      this.unset("stats");
+    } else {
+      this.set("stats", Value.fromString(value as string));
+    }
   }
 
-  get hodlHist(): Array<i32> {
-    let value = this.get("hodlHist");
-    return value.toI32Array();
+  get currentCollectionCount(): i32 {
+    let value = this.get("currentCollectionCount");
+    return value.toI32();
   }
 
-  set hodlHist(value: Array<i32>) {
-    this.set("hodlHist", Value.fromI32Array(value));
+  set currentCollectionCount(value: i32) {
+    this.set("currentCollectionCount", Value.fromI32(value));
   }
 
-  get mintHist(): Array<string> {
-    let value = this.get("mintHist");
+  get currentCollection(): Array<string> {
+    let value = this.get("currentCollection");
     return value.toStringArray();
   }
 
-  set mintHist(value: Array<string>) {
-    this.set("mintHist", Value.fromStringArray(value));
+  set currentCollection(value: Array<string>) {
+    this.set("currentCollection", Value.fromStringArray(value));
+  }
+
+  get holdHistoryCount(): i32 {
+    let value = this.get("holdHistoryCount");
+    return value.toI32();
+  }
+
+  set holdHistoryCount(value: i32) {
+    this.set("holdHistoryCount", Value.fromI32(value));
+  }
+
+  get holdHistory(): Array<string> {
+    let value = this.get("holdHistory");
+    return value.toStringArray();
+  }
+
+  set holdHistory(value: Array<string>) {
+    this.set("holdHistory", Value.fromStringArray(value));
+  }
+
+  get mintCount(): i32 {
+    let value = this.get("mintCount");
+    return value.toI32();
+  }
+
+  set mintCount(value: i32) {
+    this.set("mintCount", Value.fromI32(value));
+  }
+
+  get mints(): Array<string> {
+    let value = this.get("mints");
+    return value.toStringArray();
+  }
+
+  set mints(value: Array<string>) {
+    this.set("mints", Value.fromStringArray(value));
+  }
+
+  get burnCount(): i32 {
+    let value = this.get("burnCount");
+    return value.toI32();
+  }
+
+  set burnCount(value: i32) {
+    this.set("burnCount", Value.fromI32(value));
+  }
+
+  get burns(): Array<string> {
+    let value = this.get("burns");
+    return value.toStringArray();
+  }
+
+  set burns(value: Array<string>) {
+    this.set("burns", Value.fromStringArray(value));
+  }
+
+  get saleCount(): i32 {
+    let value = this.get("saleCount");
+    return value.toI32();
+  }
+
+  set saleCount(value: i32) {
+    this.set("saleCount", Value.fromI32(value));
+  }
+
+  get sales(): Array<string> {
+    let value = this.get("sales");
+    return value.toStringArray();
+  }
+
+  set sales(value: Array<string>) {
+    this.set("sales", Value.fromStringArray(value));
+  }
+}
+
+export class VoxoToken extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save VoxoToken entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save VoxoToken entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("VoxoToken", id.toString(), this);
+  }
+
+  static load(id: string): VoxoToken | null {
+    return store.get("VoxoToken", id) as VoxoToken | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get user(): string | null {
+    let value = this.get("user");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
+  }
+
+  get minter(): string | null {
+    let value = this.get("minter");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set minter(value: string | null) {
+    if (value === null) {
+      this.unset("minter");
+    } else {
+      this.set("minter", Value.fromString(value as string));
+    }
+  }
+
+  get burner(): string | null {
+    let value = this.get("burner");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set burner(value: string | null) {
+    if (value === null) {
+      this.unset("burner");
+    } else {
+      this.set("burner", Value.fromString(value as string));
+    }
+  }
+
+  get ownerHistory(): Array<string> {
+    let value = this.get("ownerHistory");
+    return value.toStringArray();
+  }
+
+  set ownerHistory(value: Array<string>) {
+    this.set("ownerHistory", Value.fromStringArray(value));
+  }
+
+  get sales(): Array<string> {
+    let value = this.get("sales");
+    return value.toStringArray();
+  }
+
+  set sales(value: Array<string>) {
+    this.set("sales", Value.fromStringArray(value));
+  }
+}
+
+export class ERC20Token extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save ERC20Token entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save ERC20Token entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("ERC20Token", id.toString(), this);
+  }
+
+  static load(id: string): ERC20Token | null {
+    return store.get("ERC20Token", id) as ERC20Token | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get decimals(): BigInt {
+    let value = this.get("decimals");
+    return value.toBigInt();
+  }
+
+  set decimals(value: BigInt) {
+    this.set("decimals", Value.fromBigInt(value));
+  }
+
+  get symbol(): string {
+    let value = this.get("symbol");
+    return value.toString();
+  }
+
+  set symbol(value: string) {
+    this.set("symbol", Value.fromString(value));
+  }
+}
+
+export class VoxoSale extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save VoxoSale entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save VoxoSale entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("VoxoSale", id.toString(), this);
+  }
+
+  static load(id: string): VoxoSale | null {
+    return store.get("VoxoSale", id) as VoxoSale | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get maker(): string {
+    let value = this.get("maker");
+    return value.toString();
+  }
+
+  set maker(value: string) {
+    this.set("maker", Value.fromString(value));
+  }
+
+  get taker(): string {
+    let value = this.get("taker");
+    return value.toString();
+  }
+
+  set taker(value: string) {
+    this.set("taker", Value.fromString(value));
+  }
+
+  get token(): string {
+    let value = this.get("token");
+    return value.toString();
+  }
+
+  set token(value: string) {
+    this.set("token", Value.fromString(value));
+  }
+
+  get paymentToken(): string {
+    let value = this.get("paymentToken");
+    return value.toString();
+  }
+
+  set paymentToken(value: string) {
+    this.set("paymentToken", Value.fromString(value));
+  }
+
+  get price(): BigDecimal {
+    let value = this.get("price");
+    return value.toBigDecimal();
+  }
+
+  set price(value: BigDecimal) {
+    this.set("price", Value.fromBigDecimal(value));
+  }
+
+  get market(): string {
+    let value = this.get("market");
+    return value.toString();
+  }
+
+  set market(value: string) {
+    this.set("market", Value.fromString(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+}
+
+export class VoxoHistoricalHold extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save VoxoHistoricalHold entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save VoxoHistoricalHold entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("VoxoHistoricalHold", id.toString(), this);
+  }
+
+  static load(id: string): VoxoHistoricalHold | null {
+    return store.get("VoxoHistoricalHold", id) as VoxoHistoricalHold | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get user(): string | null {
+    let value = this.get("user");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
+  }
+
+  get token(): string | null {
+    let value = this.get("token");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set token(value: string | null) {
+    if (value === null) {
+      this.unset("token");
+    } else {
+      this.set("token", Value.fromString(value as string));
+    }
   }
 }
 
@@ -109,22 +497,40 @@ export class VoxoStats extends Entity {
     this.set("totalMinted", Value.fromI32(value));
   }
 
-  get histHodlers(): Array<Bytes> {
-    let value = this.get("histHodlers");
-    return value.toBytesArray();
+  get totalBurned(): i32 {
+    let value = this.get("totalBurned");
+    return value.toI32();
   }
 
-  set histHodlers(value: Array<Bytes>) {
-    this.set("histHodlers", Value.fromBytesArray(value));
+  set totalBurned(value: i32) {
+    this.set("totalBurned", Value.fromI32(value));
   }
 
-  get currentHodlers(): Array<Bytes> {
-    let value = this.get("currentHodlers");
-    return value.toBytesArray();
+  get totalTransfers(): i32 {
+    let value = this.get("totalTransfers");
+    return value.toI32();
   }
 
-  set currentHodlers(value: Array<Bytes>) {
-    this.set("currentHodlers", Value.fromBytesArray(value));
+  set totalTransfers(value: i32) {
+    this.set("totalTransfers", Value.fromI32(value));
+  }
+
+  get totalHolders(): i32 {
+    let value = this.get("totalHolders");
+    return value.toI32();
+  }
+
+  set totalHolders(value: i32) {
+    this.set("totalHolders", Value.fromI32(value));
+  }
+
+  get totalHistoricalHolders(): i32 {
+    let value = this.get("totalHistoricalHolders");
+    return value.toI32();
+  }
+
+  set totalHistoricalHolders(value: i32) {
+    this.set("totalHistoricalHolders", Value.fromI32(value));
   }
 }
 
@@ -158,6 +564,15 @@ export class MintEvent extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get type(): string {
+    let value = this.get("type");
+    return value.toString();
+  }
+
+  set type(value: string) {
+    this.set("type", Value.fromString(value));
+  }
+
   get blockNumber(): BigInt {
     let value = this.get("blockNumber");
     return value.toBigInt();
@@ -176,13 +591,105 @@ export class MintEvent extends Entity {
     this.set("timestamp", Value.fromBigInt(value));
   }
 
-  get user(): string {
+  get user(): string | null {
     let value = this.get("user");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
+  }
+
+  get tokenId(): i32 {
+    let value = this.get("tokenId");
+    return value.toI32();
+  }
+
+  set tokenId(value: i32) {
+    this.set("tokenId", Value.fromI32(value));
+  }
+}
+
+export class BurnEvent extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save BurnEvent entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save BurnEvent entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("BurnEvent", id.toString(), this);
+  }
+
+  static load(id: string): BurnEvent | null {
+    return store.get("BurnEvent", id) as BurnEvent | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
     return value.toString();
   }
 
-  set user(value: string) {
-    this.set("user", Value.fromString(value));
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get type(): string {
+    let value = this.get("type");
+    return value.toString();
+  }
+
+  set type(value: string) {
+    this.set("type", Value.fromString(value));
+  }
+
+  get blockNumber(): BigInt {
+    let value = this.get("blockNumber");
+    return value.toBigInt();
+  }
+
+  set blockNumber(value: BigInt) {
+    this.set("blockNumber", Value.fromBigInt(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get user(): string | null {
+    let value = this.get("user");
+    if (value === null || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set user(value: string | null) {
+    if (value === null) {
+      this.unset("user");
+    } else {
+      this.set("user", Value.fromString(value as string));
+    }
   }
 
   get tokenId(): i32 {

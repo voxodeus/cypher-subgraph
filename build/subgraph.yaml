@@ -21,6 +21,10 @@ dataSources:
       abis:
         - name: VoxoDeus
           file: VoxoDeus/abis/VoxoDeus.json
+        - name: OpenSea
+          file: VoxoDeus/abis/OpenSea.json
+        - name: ERC20
+          file: VoxoDeus/abis/ERC20.json
       eventHandlers:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
