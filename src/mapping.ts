@@ -66,7 +66,7 @@ function getOrCreateVoxosToken(tokenId: string): VoxoToken {
 
 function CreateIfNotExistsVoxoHistoricalHodl(samaritanId: string, tokenId: string):  boolean {
   // load historical hodl (create if doesn't exist)
-  let id = samaritanId + "-" + tokenId
+  let id = samaritanId
   let created = false
   let historicalHodl = VoxoHistoricalHold.load(id)
   if (historicalHodl == null){
@@ -79,9 +79,9 @@ function CreateIfNotExistsVoxoHistoricalHodl(samaritanId: string, tokenId: strin
   return created
 }
 
-// We react to only transfer events of Voxos 
+// We react to only transfer events of Voxos
 export function handleTransfer(event: Transfer): void {
-  // extract most useful fields 
+  // extract most useful fields
   let to = event.params.to
   let from = event.params.from
   let tokenId = event.params.tokenId.toI32()
@@ -91,9 +91,9 @@ export function handleTransfer(event: Transfer): void {
   let stats = getOrCreateVoxosStats()
   let fromSamaritan = getOrCreateSamaritan(from.toHex()).samaritan
   let samaritanResult = getOrCreateSamaritan(to.toHex())
-  
+
   let samaritan = samaritanResult.samaritan
-  
+
   // Increase total token transfers by one
   stats.totalTransfers = stats.totalTransfers + 1
 
@@ -120,12 +120,12 @@ export function handleTransfer(event: Transfer): void {
 
   // Create a hodl history if not exists.
   let created = CreateIfNotExistsVoxoHistoricalHodl(samaritan.id, tokenId.toString())
-  
+
   // Increase holdHistoryCount if the samaritan didn't own this token previously.
   if (created) {
     samaritan.holdHistoryCount = samaritan.holdHistoryCount + 1
   }
-  
+
   // Check if it's a mint or a burn event.
   if (from.toHex() == ZERO_ADDRESS){
     let mintEvent = new MintEvent(txid)
@@ -157,10 +157,10 @@ export function handleTransfer(event: Transfer): void {
     samaritan.burnCount = samaritan.burnCount + 1
 
     token.burner = samaritan.id
-  } 
+  }
 
   // Check if it's a atmoicMatch_ contract call.
-  if (event.transaction.input != null && 
+  if (event.transaction.input != null &&
     event.transaction.input.length > 0 &&
     buf2hex(event.transaction.input.subarray(0,4), 0, 4).toHex() == ATOMIC_MATCH_FUNC
     ) {
